@@ -132,14 +132,14 @@ const GRUPOS_EXAMES = {
 const TREINOS = [
  {id:"A",nome:"A — Peito / Ombros",dia:"Segunda",desc:"4 séries por exercício. 20-15-10-FALHA ou 12-10-8-FALHA. Descanso 60s.",blocos:[
   {x:4,r:60,ex:[["Supino inclinado máquina","BENCH_PRESS","INCLINE_BARBELL_BENCH_PRESS",15]]},
-  {x:4,r:60,ex:[["Supino reto máquina","BARBELL_BENCH_PRESS","BARBELL_BENCH_PRESS",15]]},
-  {x:4,r:60,ex:[["Voador / Peck deck","FLYE","FLYE",15]]},
+  {x:4,r:60,ex:[["Supino reto máquina","BENCH_PRESS","BARBELL_BENCH_PRESS",15]]},
+  {x:4,r:60,ex:[["Voador / Peck deck","FLYE","DUMBBELL_FLYE",15]]},
   {x:4,r:60,ex:[["Crucifixo deitado halteres","FLYE","DUMBBELL_FLYE",10]]},
-  {x:4,r:60,ex:[["Pullover halteres","FLYE","FLYE",15]]},
+  {x:4,r:60,ex:[["Pullover halteres","PULL_UP","EZ_BAR_PULLOVER",15]]},
   {x:4,r:60,ex:[["Crucifixo cross polia alta","FLYE","CABLE_CROSSOVER",15]]},
   {x:4,r:60,ex:[["Desenvolvimento Arnold","SHOULDER_PRESS","ARNOLD_PRESS",10]]},
-  {x:4,r:60,ex:[["Elevação lateral no cross","LATERAL_RAISE","LATERAL_RAISE",10]]},
-  {x:4,r:60,ex:[["Elevação frontal no cross","LATERAL_RAISE","FRONT_RAISE",10]]}]},
+  {x:4,r:60,ex:[["Elevação lateral no cross","LATERAL_RAISE","ONE_ARM_CABLE_LATERAL_RAISE",10]]},
+  {x:4,r:60,ex:[["Elevação frontal no cross","LATERAL_RAISE","CABLE_FRONT_RAISE",10]]}]},
  {id:"B",nome:"B — Pernas / Panturrilha",dia:"Terça",desc:"4 séries. Panturrilha 4x até a falha. Descanso 60s.",blocos:[
   {x:4,r:60,ex:[["Cadeira extensora","SQUAT","MACHINE_LEG_EXTENSION",15]]},
   {x:4,r:60,ex:[["Cadeira flexora","LEG_CURL","MACHINE_LEG_CURL_SEATED",10]]},
@@ -151,30 +151,30 @@ const TREINOS = [
   {x:4,r:60,ex:[["Panturrilha em pé / leg","CALF_RAISE","MACHINE_CALF_PRESS",20]]},
   {x:4,r:60,ex:[["Panturrilha sentado","CALF_RAISE","SEATED_CALF_RAISE",20]]}]},
  {id:"C",nome:"C — Costas / Ombro posterior",dia:"Quarta",desc:"4 séries. Trapézio 4x até a falha. Descanso 60s.",blocos:[
-  {x:4,r:60,ex:[["Puxada frente (pulley)","LAT_PULLDOWN","LAT_PULLDOWN",10]]},
-  {x:4,r:60,ex:[["Remada sentada triângulo","SEATED_CABLE_ROW","SEATED_CABLE_ROW",10]]},
+  {x:4,r:60,ex:[["Puxada frente (pulley)","PULL_UP","LAT_PULLDOWN",10]]},
+  {x:4,r:60,ex:[["Remada sentada triângulo","ROW","V_GRIP_CABLE_ROW",10]]},
   {x:4,r:60,ex:[["Remada cavalinho","ROW","T_BAR_ROW",10]]},
-  {x:4,r:60,ex:[["Pulldown braços estendidos","LAT_PULLDOWN","LAT_PULLDOWN",15]]},
-  {x:4,r:60,ex:[["Remada unilateral serrote","DUMBBELL_ROW","DUMBBELL_ROW",15]]},
-  {x:4,r:60,ex:[["Remada máquina articulada","SEATED_CABLE_ROW","SEATED_CABLE_ROW",15]]},
-  {x:4,r:60,ex:[["Crucifixo inverso máquina/cross","FLYE","FLYE",15]]},
-  {x:4,r:60,ex:[["Crucifixo inverso halteres","FLYE","FLYE",10]]},
+  {x:4,r:60,ex:[["Pulldown braços estendidos","PULL_UP","STRAIGHT_ARM_PULLDOWN",15]]},
+  {x:4,r:60,ex:[["Remada unilateral serrote","ROW","DUMBBELL_ROW",15]]},
+  {x:4,r:60,ex:[["Remada máquina articulada","ROW","SEATED_CABLE_ROW",15]]},
+  {x:4,r:60,ex:[["Crucifixo inverso máquina/cross","FLYE","SINGLE_ARM_STANDING_CABLE_REVERSE_FLYE",15]]},
+  {x:4,r:60,ex:[["Crucifixo inverso halteres","LATERAL_RAISE","BENT_OVER_LATERAL_RAISE",10]]},
   {x:4,r:60,ex:[["Encolhimento trapézio","SHRUG","DUMBBELL_SHRUG",15]]}]},
  {id:"D",nome:"D — Bíceps / Tríceps",dia:"Quinta",desc:"4 séries. Pode conjugar bíceps/tríceps. Descanso 45s.",blocos:[
   {x:4,r:45,ex:[["Rosca Scott máquina","CURL","EZ_BAR_PREACHER_CURL",15]]},
-  {x:4,r:45,ex:[["Tríceps pulley supinado","TRICEPS_PUSHDOWN","TRICEPS_PUSHDOWN",15]]},
-  {x:4,r:45,ex:[["Rosca direta barra","BARBELL_CURL","BARBELL_CURL",10]]},
-  {x:4,r:45,ex:[["Tríceps pulley pronado","TRICEPS_PUSHDOWN","TRICEPS_PUSHDOWN",10]]},
+  {x:4,r:45,ex:[["Tríceps pulley supinado","TRICEPS_EXTENSION","REVERSE_GRIP_TRICEPS_PRESSDOWN",15]]},
+  {x:4,r:45,ex:[["Rosca direta barra","CURL","BARBELL_BICEPS_CURL",10]]},
+  {x:4,r:45,ex:[["Tríceps pulley pronado","TRICEPS_EXTENSION","TRICEPS_PRESSDOWN",10]]},
   {x:4,r:45,ex:[["Rosca alternada halteres","CURL","ALTERNATING_DUMBBELL_BICEPS_CURL",10]]},
-  {x:4,r:45,ex:[["Tríceps testa halteres","TRICEPS_EXTENSION","EZ_BAR_LYING_TRICEPS_EXTENSION",10]]},
+  {x:4,r:45,ex:[["Tríceps testa halteres","TRICEPS_EXTENSION","DUMBBELL_LYING_TRICEPS_EXTENSION",10]]},
   {x:4,r:45,ex:[["Rosca martelo","CURL","DUMBBELL_HAMMER_CURL",15]]},
-  {x:4,r:45,ex:[["Tríceps francês cross","TRICEPS_EXTENSION","OVERHEAD_DUMBBELL_TRICEPS_EXTENSION",15]]},
-  {x:4,r:45,ex:[["Rosca concentrada","CURL","CONCENTRATION_CURL",10]]}]},
+  {x:4,r:45,ex:[["Tríceps francês cross","TRICEPS_EXTENSION","CABLE_OVERHEAD_TRICEPS_EXTENSION",15]]},
+  {x:4,r:45,ex:[["Rosca concentrada","CURL","ONE_ARM_CONCENTRATION_CURL",10]]}]},
  {id:"E",nome:"E — Calistenia",dia:"Sexta",desc:"Corpo livre: barra, paralelas, flexão, burpee e core. Execução limpa.",blocos:[
-  {x:2,r:30,ex:[["Polichinelos 40s","CARDIO","JUMPING_JACKS",null,40],["Agachamento livre leve","SQUAT","BODYWEIGHT_SQUAT",15]]},
-  {x:4,r:90,ex:[["Barra fixa pronada (6-8)","PULL_UP","PULL_UP",8],["Paralelas / dips (8-10)","DIP","DIP",10]]},
+  {x:2,r:30,ex:[["Polichinelos 40s","CARDIO","JUMPING_JACKS",null,40],["Agachamento livre leve","SQUAT","AIR_SQUAT",15]]},
+  {x:4,r:90,ex:[["Barra fixa pronada (6-8)","PULL_UP","PULL_UP",8],["Paralelas / dips (8-10)","TRICEPS_EXTENSION","BODY_WEIGHT_DIP",10]]},
   {x:4,r:90,ex:[["Flexão de braços (12-15)","PUSH_UP","PUSH_UP",15],["Barra supinada / chin-up (6-8)","PULL_UP","CHIN_UP",8]]},
-  {x:3,r:75,ex:[["Agachamento livre","SQUAT","BODYWEIGHT_SQUAT",20],["Afundo alternado (12/perna)","LUNGE","LUNGE",24],["Burpee","TOTAL_BODY","BURPEE",10]]},
+  {x:3,r:75,ex:[["Agachamento livre","SQUAT","AIR_SQUAT",20],["Afundo alternado (12/perna)","LUNGE","LUNGE",24],["Burpee","TOTAL_BODY","BURPEE",10]]},
   {x:3,r:60,ex:[["Elevação de pernas na barra","LEG_RAISE","HANGING_LEG_RAISE",10],["Abdominal bicicleta","CRUNCH","BICYCLE_CRUNCH",20],["Prancha 45s","PLANK","PLANK",null,45],["Escalador 30s","PLANK","MOUNTAIN_CLIMBER",null,30]]},
   {x:2,r:60,ex:[["Flexão diamante (até a falha)","PUSH_UP","DIAMOND_PUSH_UP",12],["Russian twist","CORE","RUSSIAN_TWIST",20]]}]},
 ];
@@ -375,7 +375,7 @@ function vConfig(m,sub_){document.getElementById("hTitle").textContent="Ajustes"
   <label style="margin-top:10px">Ou cole o backup aqui</label><textarea id="imptxt" placeholder='{"exames":...}'></textarea><div class="row" style="margin-top:8px"><button class="sec" onclick="importarTexto()">Importar texto colado</button></div></div>
  <div class="card"><h2>Instalar no iPhone</h2><ol class="muted" style="padding-left:18px;line-height:1.6"><li>Abra esta página no Safari.</li><li>Toque em Compartilhar (quadrado com seta).</li><li>"Adicionar à Tela de Início".</li></ol></div>
  <div class="card"><h2>Zona de perigo</h2><button class="danger" onclick="if(confirm('Apagar TODOS os dados deste aparelho?')){localStorage.removeItem(KEY);S=load();render()}">Apagar tudo</button></div>
- <p class="muted" style="text-align:center">Minha Saúde · v0.2 · 11/11/2026</p>`;}
+ <p class="muted" style="text-align:center">Minha Saúde · v0.3 · 11/11/2026</p>`;}
 function importarTexto(){try{const s=JSON.parse(document.getElementById("imptxt").value);if(!s.exames)throw 0;S=s;save();toast("Backup importado");render();}catch(e){toast("Texto inválido");}}
 function importar(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const s=JSON.parse(r.result);if(!s.exames)throw 0;S=s;save();toast("Backup importado");render();}catch(e){toast("Arquivo inválido");}};r.readAsText(f);}
 
