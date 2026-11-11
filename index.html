@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Minha Saúde</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Saúde">
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230f172a'/%3E%3Cpath d='M90 140 L45 95 a25 25 0 0 1 45-30 a25 25 0 0 1 45 30 Z' fill='%2334d399'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--card2:#273449;--text:#e2e8f0;--muted:#94a3b8;--acc:#34d399;--acc2:#60a5fa;--warn:#fbbf24;--bad:#f87171;--r:14px}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;background:rgba(15,23,42,.92);backdrop-filter:blur(10px);padding:calc(10px + env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid #1e293b;z-index:5}
+header h1{margin:0;font-size:22px;font-weight:700}
+header p{margin:2px 0 0;color:var(--muted);font-size:13px}
+main{padding:14px 14px 0;max-width:720px;margin:0 auto}
+.card{background:var(--card);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.card h2{margin:0 0 10px;font-size:16px}
+.card h3{margin:12px 0 6px;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+label{font-size:12px;color:var(--muted);display:block;margin-bottom:3px}
+input,select,textarea{width:100%;background:#0b1220;color:var(--text);border:1px solid #334155;border-radius:10px;padding:10px;font-size:16px}
+textarea{min-height:60px}
+button{background:var(--acc);color:#052e22;border:0;border-radius:10px;padding:11px 14px;font-size:15px;font-weight:600;cursor:pointer}
+button.sec{background:var(--card2);color:var(--text)}
+button.sm{padding:6px 10px;font-size:13px}
+button.danger{background:var(--bad);color:#2b0a0a}
+nav{position:fixed;bottom:0;left:0;right:0;background:rgba(15,23,42,.95);backdrop-filter:blur(10px);border-top:1px solid #1e293b;display:flex;padding:6px 0 calc(6px + env(safe-area-inset-bottom));z-index:5}
+nav button{flex:1;background:none;color:var(--muted);font-size:11px;padding:6px 0;border-radius:0;font-weight:500}
+nav button span{display:block;font-size:22px;margin-bottom:2px}
+nav button.on{color:var(--acc)}
+.pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;background:var(--card2);color:var(--muted)}
+.pill.ok{background:#064e3b;color:#a7f3d0}.pill.hi{background:#7f1d1d;color:#fecaca}.pill.lo{background:#78350f;color:#fde68a}
+.list{display:flex;flex-direction:column;gap:6px}
+.item{background:var(--card2);border-radius:10px;padding:10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.item .t{font-weight:600}.item .s{font-size:12px;color:var(--muted)}
+.muted{color:var(--muted);font-size:13px}
+.big{font-size:28px;font-weight:700}
+svg.chart{width:100%;height:140px;display:block}
+.hidden{display:none}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:7px 4px;border-bottom:1px solid #334155;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:500;font-size:12px}
+.setrow{display:grid;grid-template-columns:36px 1fr 1fr 44px;gap:6px;align-items:center;margin-bottom:6px}
+.setrow .n{color:var(--muted);font-size:13px;text-align:center}
+.chk{width:44px;height:40px;font-size:18px;padding:0}
+.chk.done{background:var(--acc)}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#f1f5f9;color:#0f172a;padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;opacity:0;transition:.3s;pointer-events:none;z-index:9}
+.toast.show{opacity:1}
+.tabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto}
+.tabs button{white-space:nowrap}
+details summary{cursor:pointer;font-weight:600;padding:6px 0}
+</style>
+</head>
+<body>
+<header><h1 id="hTitle">Minha Saúde</h1><p id="hSub"></p></header>
+<main id="main"></main>
+<nav>
+<button data-v="hoje"><span>📅</span>Hoje</button>
+<button data-v="treinos"><span>🏋️</span>Treinos</button>
+<button data-v="exames"><span>🧪</span>Exames</button>
+<button data-v="dieta"><span>🥗</span>Dieta</button>
+<button data-v="config"><span>⚙️</span>Ajustes</button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ DADOS INICIAIS ============ */
+const SEED_EXAMES = {
+ // chave: {nome, unidade, ref:[min,max] (null = sem limite), hist:{}}
+ hemoglobina:{nome:"Hemoglobina",un:"g/dL",ref:[13,17],hist:{}},
+ hematocrito:{nome:"Hematócrito",un:"%",ref:[40,50],hist:{}},
+ hemacias:{nome:"Hemácias",un:"10⁶/µL",ref:[4.5,5.5],hist:{}},
+ vcm:{nome:"VCM (volume corpuscular)",un:"fL",ref:[83,101],hist:{}},
+ leucocitos:{nome:"Leucócitos",un:"/µL",ref:[4000,10000],hist:{}},
+ plaquetas:{nome:"Plaquetas",un:"/µL",ref:[150000,450000],hist:{}},
+ ferro:{nome:"Ferro sérico",un:"µg/dL",ref:[33,193],hist:{}},
+ ferritina:{nome:"Ferritina",un:"ng/mL",ref:[30,400],hist:{}},
+ b12:{nome:"Vitamina B12",un:"pg/mL",ref:[245,985],hist:{}},
+ vitd:{nome:"Vitamina D (25-OH)",un:"ng/mL",ref:[30,100],hist:{}},
+ glicose:{nome:"Glicose jejum",un:"mg/dL",ref:[70,99],hist:{}},
+ hba1c:{nome:"Hemoglobina glicada (HbA1c)",un:"%",ref:[null,5.7],hist:{}},
+ insulina:{nome:"Insulina basal",un:"µUI/mL",ref:[2,25],hist:{}},
+ homa:{nome:"HOMA-IR",un:"",ref:[null,2.7],hist:{}},
+ colt:{nome:"Colesterol total",un:"mg/dL",ref:[null,190],hist:{}},
+ hdl:{nome:"HDL",un:"mg/dL",ref:[40,null],hist:{}},
+ ldl:{nome:"LDL",un:"mg/dL",ref:[null,115],hist:{}},
+ naohdl:{nome:"Não-HDL",un:"mg/dL",ref:[null,145],hist:{}},
+ vldl:{nome:"VLDL",un:"mg/dL",ref:[null,30],hist:{}},
+ trig:{nome:"Triglicerídeos",un:"mg/dL",ref:[null,150],hist:{}},
+ creat:{nome:"Creatinina",un:"mg/dL",ref:[0.7,1.3],hist:{}},
+ ureia:{nome:"Ureia",un:"mg/dL",ref:[19,49],hist:{}},
+ acurico:{nome:"Ácido úrico",un:"mg/dL",ref:[3.5,7.2],hist:{}},
+ tgo:{nome:"TGO (AST)",un:"U/L",ref:[null,40],hist:{}},
+ tgp:{nome:"TGP (ALT)",un:"U/L",ref:[null,41],hist:{}},
+ tsh:{nome:"TSH",un:"µUI/mL",ref:[0.4,4.5],hist:{}},
+ t4l:{nome:"T4 livre",un:"ng/dL",ref:[0.8,1.8],hist:{}},
+ t4:{nome:"T4 total",un:"µg/dL",ref:[5.56,9.91],hist:{}},
+ t3:{nome:"T3 total",un:"ng/dL",ref:[80,200],hist:{}},
+ testo:{nome:"Testosterona total",un:"ng/dL",ref:[300,1000],hist:{}},
+ testol:{nome:"Testosterona livre",un:"pg/mL",ref:[47,244],hist:{}},
+ estradiol:{nome:"Estradiol",un:"pg/mL",ref:[null,40],hist:{}},
+ prolactina:{nome:"Prolactina",un:"ng/mL",ref:[null,20],hist:{}},
+ psa:{nome:"PSA total",un:"ng/mL",ref:[null,4],hist:{}},
+ sodio:{nome:"Sódio",un:"mEq/L",ref:[132,146],hist:{}},
+ potassio:{nome:"Potássio",un:"mEq/L",ref:[3.5,5.1],hist:{}},
+ magnesio:{nome:"Magnésio",un:"mg/dL",ref:[1.6,2.6],hist:{}},
+ calcio:{nome:"Cálcio",un:"mg/dL",ref:[8.6,10.2],hist:{}},
+ bilit:{nome:"Bilirrubina total",un:"mg/dL",ref:[0.3,1.2],hist:{}},
+ vhs:{nome:"VHS 1ª hora",un:"mm/h",ref:[null,15],hist:{}},
+ microalb:{nome:"Relação albumina/creatinina (urina)",un:"mg/g",ref:[null,30],hist:{}},
+};
+const GRUPOS_EXAMES = {
+ "Lipídios":["colt","hdl","ldl","naohdl","vldl","trig"],
+ "Glicose / insulina":["glicose","hba1c","insulina","homa"],
+ "Hemograma":["hemoglobina","hematocrito","hemacias","vcm","leucocitos","plaquetas"],
+ "Ferro e vitaminas":["ferro","ferritina","b12","vitd"],
+ "Rins / fígado":["creat","ureia","acurico","tgo","tgp","bilit","microalb"],
+ "Tireoide":["tsh","t4l","t4","t3"],
+ "Hormônios":["testo","testol","estradiol","prolactina","psa"],
+ "Eletrólitos / outros":["sodio","potassio","magnesio","calcio","vhs"],
+};
+
+// Treinos: ex = [descrição, categoria Garmin, nome Garmin, alvo reps|null, segundos|null]
+const TREINOS = [
+ {id:"A",nome:"A — Peito / Ombros",dia:"Segunda",desc:"4 séries por exercício. 20-15-10-FALHA ou 12-10-8-FALHA. Descanso 60s.",blocos:[
+  {x:4,r:60,ex:[["Supino inclinado máquina","BENCH_PRESS","INCLINE_BARBELL_BENCH_PRESS",15]]},
+  {x:4,r:60,ex:[["Supino reto máquina","BARBELL_BENCH_PRESS","BARBELL_BENCH_PRESS",15]]},
+  {x:4,r:60,ex:[["Voador / Peck deck","FLYE","FLYE",15]]},
+  {x:4,r:60,ex:[["Crucifixo deitado halteres","FLYE","DUMBBELL_FLYE",10]]},
+  {x:4,r:60,ex:[["Pullover halteres","FLYE","FLYE",15]]},
+  {x:4,r:60,ex:[["Crucifixo cross polia alta","FLYE","CABLE_CROSSOVER",15]]},
+  {x:4,r:60,ex:[["Desenvolvimento Arnold","SHOULDER_PRESS","ARNOLD_PRESS",10]]},
+  {x:4,r:60,ex:[["Elevação lateral no cross","LATERAL_RAISE","LATERAL_RAISE",10]]},
+  {x:4,r:60,ex:[["Elevação frontal no cross","LATERAL_RAISE","FRONT_RAISE",10]]}]},
+ {id:"B",nome:"B — Pernas / Panturrilha",dia:"Terça",desc:"4 séries. Panturrilha 4x até a falha. Descanso 60s.",blocos:[
+  {x:4,r:60,ex:[["Cadeira extensora","SQUAT","MACHINE_LEG_EXTENSION",15]]},
+  {x:4,r:60,ex:[["Cadeira flexora","LEG_CURL","MACHINE_LEG_CURL_SEATED",10]]},
+  {x:4,r:60,ex:[["Mesa flexora / flexor em pé","LEG_CURL","LYING_LEG_CURL",15]]},
+  {x:4,r:60,ex:[["Leg press 45 ou 180","SQUAT","LEG_PRESS",15]]},
+  {x:4,r:60,ex:[["Agachamento (livre escolha)","SQUAT","BARBELL_BACK_SQUAT",10]]},
+  {x:4,r:60,ex:[["Cadeira adutora","HIP_STABILITY","MACHINE_HIP_ADDUCTION",10]]},
+  {x:4,r:60,ex:[["Cadeira abdutora","HIP_STABILITY","MACHINE_HIP_ABDUCTION",10]]},
+  {x:4,r:60,ex:[["Panturrilha em pé / leg","CALF_RAISE","MACHINE_CALF_PRESS",20]]},
+  {x:4,r:60,ex:[["Panturrilha sentado","CALF_RAISE","SEATED_CALF_RAISE",20]]}]},
+ {id:"C",nome:"C — Costas / Ombro posterior",dia:"Quarta",desc:"4 séries. Trapézio 4x até a falha. Descanso 60s.",blocos:[
+  {x:4,r:60,ex:[["Puxada frente (pulley)","LAT_PULLDOWN","LAT_PULLDOWN",10]]},
+  {x:4,r:60,ex:[["Remada sentada triângulo","SEATED_CABLE_ROW","SEATED_CABLE_ROW",10]]},
+  {x:4,r:60,ex:[["Remada cavalinho","ROW","T_BAR_ROW",10]]},
+  {x:4,r:60,ex:[["Pulldown braços estendidos","LAT_PULLDOWN","LAT_PULLDOWN",15]]},
+  {x:4,r:60,ex:[["Remada unilateral serrote","DUMBBELL_ROW","DUMBBELL_ROW",15]]},
+  {x:4,r:60,ex:[["Remada máquina articulada","SEATED_CABLE_ROW","SEATED_CABLE_ROW",15]]},
+  {x:4,r:60,ex:[["Crucifixo inverso máquina/cross","FLYE","FLYE",15]]},
+  {x:4,r:60,ex:[["Crucifixo inverso halteres","FLYE","FLYE",10]]},
+  {x:4,r:60,ex:[["Encolhimento trapézio","SHRUG","DUMBBELL_SHRUG",15]]}]},
+ {id:"D",nome:"D — Bíceps / Tríceps",dia:"Quinta",desc:"4 séries. Pode conjugar bíceps/tríceps. Descanso 45s.",blocos:[
+  {x:4,r:45,ex:[["Rosca Scott máquina","CURL","EZ_BAR_PREACHER_CURL",15]]},
+  {x:4,r:45,ex:[["Tríceps pulley supinado","TRICEPS_PUSHDOWN","TRICEPS_PUSHDOWN",15]]},
+  {x:4,r:45,ex:[["Rosca direta barra","BARBELL_CURL","BARBELL_CURL",10]]},
+  {x:4,r:45,ex:[["Tríceps pulley pronado","TRICEPS_PUSHDOWN","TRICEPS_PUSHDOWN",10]]},
+  {x:4,r:45,ex:[["Rosca alternada halteres","CURL","ALTERNATING_DUMBBELL_BICEPS_CURL",10]]},
+  {x:4,r:45,ex:[["Tríceps testa halteres","TRICEPS_EXTENSION","EZ_BAR_LYING_TRICEPS_EXTENSION",10]]},
+  {x:4,r:45,ex:[["Rosca martelo","CURL","DUMBBELL_HAMMER_CURL",15]]},
+  {x:4,r:45,ex:[["Tríceps francês cross","TRICEPS_EXTENSION","OVERHEAD_DUMBBELL_TRICEPS_EXTENSION",15]]},
+  {x:4,r:45,ex:[["Rosca concentrada","CURL","CONCENTRATION_CURL",10]]}]},
+ {id:"E",nome:"E — Calistenia",dia:"Sexta",desc:"Corpo livre: barra, paralelas, flexão, burpee e core. Execução limpa.",blocos:[
+  {x:2,r:30,ex:[["Polichinelos 40s","CARDIO","JUMPING_JACKS",null,40],["Agachamento livre leve","SQUAT","BODYWEIGHT_SQUAT",15]]},
+  {x:4,r:90,ex:[["Barra fixa pronada (6-8)","PULL_UP","PULL_UP",8],["Paralelas / dips (8-10)","DIP","DIP",10]]},
+  {x:4,r:90,ex:[["Flexão de braços (12-15)","PUSH_UP","PUSH_UP",15],["Barra supinada / chin-up (6-8)","PULL_UP","CHIN_UP",8]]},
+  {x:3,r:75,ex:[["Agachamento livre","SQUAT","BODYWEIGHT_SQUAT",20],["Afundo alternado (12/perna)","LUNGE","LUNGE",24],["Burpee","TOTAL_BODY","BURPEE",10]]},
+  {x:3,r:60,ex:[["Elevação de pernas na barra","LEG_RAISE","HANGING_LEG_RAISE",10],["Abdominal bicicleta","CRUNCH","BICYCLE_CRUNCH",20],["Prancha 45s","PLANK","PLANK",null,45],["Escalador 30s","PLANK","MOUNTAIN_CLIMBER",null,30]]},
+  {x:2,r:60,ex:[["Flexão diamante (até a falha)","PUSH_UP","DIAMOND_PUSH_UP",12],["Russian twist","CORE","RUSSIAN_TWIST",20]]}]},
+];
+
+const DIETA = [
+ {ref:"Desjejum",hora:"06:30",itens:["Ovos mexidos — 2 unidades","Cuscuz — 1 cuscuzeira pequena","Café com leite semidesnatado — 1 xícara","OU: 2 pães de queijo pequenos + 2 ovos mexidos + café com leite"]},
+ {ref:"Colação (pré-treino)",hora:"",itens:["Iogurte natural desnatado — 1 copinho","Morango — 8 unidades","Whey — 30 g"]},
+ {ref:"Almoço",hora:"14:00",itens:["Arroz ou macarrão — 2 colheres de servir (150 g) ou vegetal C — 1 pegador (70 g)","Feijão, grão de bico ou lentilha — 1 concha (80 g)","Carne, frango ou peixe — 2 porções (180 g)","Vegetal A — à vontade","Vegetal B — 4 colheres de sopa","Azeite — 1 colher de sopa"]},
+ {ref:"Lanche / jantar",hora:"18:00",itens:["Omelete recheado (2 ovos + 2 colheres de carne/frango) ou crepioca (1 ovo + 1 colher de polvilho)","Salada crua — à vontade","OU: pão francês com atum/frango, alface e tomate","OU: parecido com o almoço, sem feijão"]},
+];
+
+/* ============ ESTADO ============ */
+const KEY="saude.v1";
+let S = load();
+function load(){
+ try{const s=JSON.parse(localStorage.getItem(KEY)); if(s) return s;}catch(e){}
+ return {exames:JSON.parse(JSON.stringify(SEED_EXAMES)),diario:{},logs:[],cargas:{},perfil:{nome:"",nasc:"",altura:""}};
+}
+function save(){ try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){toast("Não consegui salvar no aparelho");} }
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800);}
+const hoje=()=>new Date().toISOString().slice(0,10);
+const fmtD=d=>{const [y,m,dd]=d.split("-");return `${dd}/${m}/${y}`;};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ============ NAVEGAÇÃO ============ */
+let view="hoje", sub=null;
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{view=b.dataset.v;sub=null;render();});
+function render(){
+ document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
+ const m=document.getElementById("main");
+ const sub_=document.getElementById("hSub");
+ ({hoje:vHoje,treinos:vTreinos,exames:vExames,dieta:vDieta,config:vConfig})[view](m,sub_);
+ window.scrollTo(0,0);
+}
+
+/* ============ HOJE / DIÁRIO ============ */
+function vHoje(m,sub_){
+ document.getElementById("hTitle").textContent="Hoje";
+ sub_.textContent=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
+ const d=S.diario[hoje()]||{};
+ const dias=Object.keys(S.diario).sort();
+ const pesos=dias.filter(k=>S.diario[k].peso).map(k=>[k,+S.diario[k].peso]);
+ const ult=pesos.length?pesos[pesos.length-1]:null;
+ const wd=new Date().getDay(); const tr=TREINOS[[null,0,1,2,3,4,null][wd]];
+ m.innerHTML=`
+ <div class="card"><h2>Treino de hoje</h2>
+  ${tr?`<div class="item"><div><div class="t">${esc(tr.nome)}</div><div class="s">${esc(tr.desc)}</div></div><button class="sm" onclick="abrirTreino('${tr.id}')">Iniciar</button></div>`:`<div class="muted">Dia de descanso. Caminhada leve ou mobilidade.</div>`}
+ </div>
+ <div class="card"><h2>Registro do dia</h2>
+  <div class="grid3">
+   <div><label>Peso (kg)</label><input id="d_peso" type="number" step="0.1" inputmode="decimal" value="${d.peso||""}"></div>
+   <div><label>Pressão (sist.)</label><input id="d_ps" type="number" inputmode="numeric" value="${d.ps||""}"></div>
+   <div><label>Pressão (diast.)</label><input id="d_pd" type="number" inputmode="numeric" value="${d.pd||""}"></div>
+   <div><label>Sono (h)</label><input id="d_sono" type="number" step="0.5" inputmode="decimal" value="${d.sono||""}"></div>
+   <div><label>FC repouso</label><input id="d_fc" type="number" inputmode="numeric" value="${d.fc||""}"></div>
+   <div><label>Energia (1-5)</label><select id="d_hum">${[1,2,3,4,5].map(n=>`<option ${d.hum==n?"selected":""}>${n}</option>`).join("")}</select></div>
+  </div>
+  <label style="margin-top:8px">Observações</label><textarea id="d_obs">${esc(d.obs||"")}</textarea>
+  <div class="row" style="margin-top:10px"><button onclick="salvarDia()">Salvar</button></div>
+ </div>
+ <div class="card"><h2>Peso</h2>
+  ${ult?`<div class="big">${ult[1].toFixed(1)} <span class="muted" style="font-size:14px">kg em ${fmtD(ult[0])}</span></div>`:`<div class="muted">Registre o peso para ver a evolução.</div>`}
+  ${pesos.length>1?chart(pesos):""}
+ </div>
+ <div class="card"><h2>Últimos registros</h2>
+  <div class="list">${dias.slice(-7).reverse().map(k=>{const x=S.diario[k];return `<div class="item"><div><div class="t">${fmtD(k)}</div><div class="s">${x.peso?x.peso+" kg · ":""}${x.ps?x.ps+"/"+x.pd+" mmHg · ":""}${x.sono?x.sono+"h sono · ":""}${x.fc?"FC "+x.fc:""}</div></div></div>`;}).join("")||'<div class="muted">Nada ainda.</div>'}</div>
+ </div>`;
+}
+function salvarDia(){
+ const g=id=>document.getElementById(id).value;
+ S.diario[hoje()]={peso:g("d_peso"),ps:g("d_ps"),pd:g("d_pd"),sono:g("d_sono"),fc:g("d_fc"),hum:g("d_hum"),obs:g("d_obs")};
+ save();toast("Salvo");render();
+}
+
+/* ============ GRÁFICO SVG ============ */
+function chart(pts,ref){ // pts: [[date,val]]; ref:[min,max]
+ const W=600,H=140,p=28;
+ const xs=pts.map(a=>new Date(a[0]).getTime()), ys=pts.map(a=>a[1]);
+ let lo=Math.min(...ys),hi=Math.max(...ys);
+ if(ref){if(ref[0]!=null)lo=Math.min(lo,ref[0]);if(ref[1]!=null)hi=Math.max(hi,ref[1]);}
+ if(hi===lo){hi+=1;lo-=1;} const pad=(hi-lo)*.15;lo-=pad;hi+=pad;
+ const x0=Math.min(...xs),x1=Math.max(...xs)||1;
+ const X=t=>xs.length>1?p+(t-x0)/(x1-x0)*(W-2*p):W/2, Y=v=>H-p+ (lo-v)/(hi-lo)*(H-2*p)*-1 - (H-2*p);
+ const Yv=v=>p+(hi-v)/(hi-lo)*(H-2*p);
+ let band="";
+ if(ref){const a=ref[0]!=null?Yv(ref[0]):H-p, b=ref[1]!=null?Yv(ref[1]):p; band=`<rect x="${p}" y="${Math.min(a,b)}" width="${W-2*p}" height="${Math.abs(a-b)}" fill="#34d399" opacity=".12"/>`;}
+ const path=pts.map((a,i)=>(i?"L":"M")+X(xs[i]).toFixed(1)+" "+Yv(ys[i]).toFixed(1)).join(" ");
+ const dots=pts.map((a,i)=>`<circle cx="${X(xs[i]).toFixed(1)}" cy="${Yv(ys[i]).toFixed(1)}" r="4" fill="${ref&&fora(ys[i],ref)?"#f87171":"#60a5fa"}"/><text x="${X(xs[i]).toFixed(1)}" y="${(Yv(ys[i])-9).toFixed(1)}" font-size="11" fill="#e2e8f0" text-anchor="middle">${ys[i]}</text>`).join("");
+ const lbl=pts.map((a,i)=>(i===0||i===pts.length-1)?`<text x="${X(xs[i]).toFixed(1)}" y="${H-6}" font-size="10" fill="#94a3b8" text-anchor="${i===0?"start":"end"}">${a[0].slice(0,7).split("-").reverse().join("/")}</text>`:"").join("");
+ return `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${band}<path d="${path}" fill="none" stroke="#60a5fa" stroke-width="2"/>${dots}${lbl}</svg>`;
+}
+function fora(v,ref){return (ref[0]!=null&&v<ref[0])||(ref[1]!=null&&v>ref[1]);}
+function status(v,ref){if(!ref)return "";if(ref[0]!=null&&v<ref[0])return "lo";if(ref[1]!=null&&v>ref[1])return "hi";return "ok";}
+
+/* ============ EXAMES ============ */
+function vExames(m,sub_){
+ document.getElementById("hTitle").textContent="Exames";
+ const datas=new Set();Object.values(S.exames).forEach(e=>Object.keys(e.hist).forEach(d=>datas.add(d)));
+ const ds=[...datas].sort();
+ sub_.textContent=ds.length?`Última coleta: ${fmtD(ds[ds.length-1])}`:"";
+ if(sub){ // detalhe de um marcador
+  const e=S.exames[sub]; const pts=Object.entries(e.hist).sort(); const last=pts[pts.length-1];
+  m.innerHTML=`<div class="card"><button class="sec sm" onclick="sub=null;render()">← Voltar</button>
+   <h2 style="margin-top:10px">${esc(e.nome)}</h2>
+   <div class="big">${last?last[1]:"—"} <span class="muted" style="font-size:14px">${esc(e.un)} · ${last?fmtD(last[0]):""}</span> ${last?`<span class="pill ${status(last[1],e.ref)}">${{ok:"na referência",hi:"acima",lo:"abaixo",'':''}[status(last[1],e.ref)]}</span>`:""}</div>
+   <div class="muted">Referência: ${refTxt(e.ref)} ${esc(e.un)}</div>
+   ${pts.length?chart(pts,e.ref):""}
+   <table><tr><th>Data</th><th>Valor</th><th></th></tr>${pts.slice().reverse().map(([d,v])=>`<tr><td>${fmtD(d)}</td><td>${v} ${esc(e.un)}</td><td><span class="pill ${status(v,e.ref)}">${{ok:"ok",hi:"↑",lo:"↓",'':''}[status(v,e.ref)]}</span> <button class="sec sm" onclick="delVal('${sub}','${d}')">✕</button></td></tr>`).join("")}</table>
+   <h3>Adicionar resultado</h3>
+   <div class="grid2"><div><label>Data</label><input id="x_d" type="date" value="${hoje()}"></div><div><label>Valor</label><input id="x_v" type="number" step="any" inputmode="decimal"></div></div>
+   <div class="row" style="margin-top:8px"><button onclick="addVal('${sub}')">Salvar</button></div>
+  </div>`; return;
+ }
+ const alterados=Object.entries(S.exames).map(([k,e])=>{const pts=Object.entries(e.hist).sort();const l=pts[pts.length-1];return l&&fora(l[1],e.ref)?[k,e,l]:null;}).filter(Boolean);
+ m.innerHTML=`
+ ${alterados.length?`<div class="card"><h2>Fora da referência (último resultado)</h2><div class="list">${alterados.map(([k,e,l])=>`<div class="item" onclick="sub='${k}';render()"><div><div class="t">${esc(e.nome)}</div><div class="s">ref. ${refTxt(e.ref)} ${esc(e.un)} · ${fmtD(l[0])}</div></div><span class="pill ${status(l[1],e.ref)}">${l[1]} ${esc(e.un)}</span></div>`).join("")}</div></div>`:""}
+ ${Object.entries(GRUPOS_EXAMES).map(([g,keys])=>`<div class="card"><h2>${g}</h2><div class="list">${keys.filter(k=>S.exames[k]).map(k=>{const e=S.exames[k];const pts=Object.entries(e.hist).sort();const l=pts[pts.length-1];return `<div class="item" onclick="sub='${k}';render()"><div><div class="t">${esc(e.nome)}</div><div class="s">${pts.length} resultado(s)${l?" · "+fmtD(l[0]):""}</div></div>${l?`<span class="pill ${status(l[1],e.ref)}">${l[1]} ${esc(e.un)}</span>`:'<span class="pill">—</span>'}</div>`;}).join("")}</div></div>`).join("")}
+ <div class="card"><h2>Novo marcador</h2>
+  <div class="grid2"><div><label>Nome</label><input id="n_nome" placeholder="Ex.: Vitamina D"></div><div><label>Unidade</label><input id="n_un" placeholder="ng/mL"></div>
+  <div><label>Ref. mínimo</label><input id="n_min" type="number" step="any" inputmode="decimal"></div><div><label>Ref. máximo</label><input id="n_max" type="number" step="any" inputmode="decimal"></div></div>
+  <div class="row" style="margin-top:8px"><button onclick="novoMarcador()">Criar</button></div>
+ </div>`;
+}
+function refTxt(r){if(!r)return "—";if(r[0]!=null&&r[1]!=null)return `${r[0]} a ${r[1]}`;if(r[0]!=null)return `≥ ${r[0]}`;if(r[1]!=null)return `≤ ${r[1]}`;return "—";}
+function addVal(k){const d=document.getElementById("x_d").value,v=parseFloat(document.getElementById("x_v").value);if(!d||isNaN(v))return toast("Preencha data e valor");S.exames[k].hist[d]=v;save();toast("Salvo");render();}
+function delVal(k,d){if(!confirm("Apagar este resultado?"))return;delete S.exames[k].hist[d];save();render();}
+function novoMarcador(){const n=document.getElementById("n_nome").value.trim();if(!n)return toast("Dê um nome");const k="c_"+n.toLowerCase().replace(/[^a-z0-9]/g,"_")+"_"+Date.now()%10000;const mn=document.getElementById("n_min").value,mx=document.getElementById("n_max").value;S.exames[k]={nome:n,un:document.getElementById("n_un").value,ref:[mn===""?null:+mn,mx===""?null:+mx],hist:{}};GRUPOS_EXAMES["Eletrólitos / outros"].push(k);save();sub=k;render();}
+
+/* ============ TREINOS ============ */
+let sessao=null; // {id, inicio, sets:{exKey:[{peso,reps,ok}]}}
+function vTreinos(m,sub_){
+ document.getElementById("hTitle").textContent="Treinos"; sub_.textContent="Ficha do personal + calistenia";
+ if(sessao){return vSessao(m);}
+ const hist=S.logs.slice().reverse().slice(0,10);
+ m.innerHTML=`<div class="card"><h2>Semana</h2><div class="list">${TREINOS.map(t=>`<div class="item"><div><div class="t">${esc(t.nome)}</div><div class="s">${t.dia} · ${t.blocos.reduce((a,b)=>a+b.ex.length,0)} exercícios</div></div><div class="row"><button class="sec sm" onclick="exportGarmin('${t.id}')">Garmin</button><button class="sm" onclick="abrirTreino('${t.id}')">Iniciar</button></div></div>`).join("")}</div>
+  <p class="muted">"Garmin" baixa o arquivo JSON do treino para importar no Garmin Connect (Treinos → Importar) e enviar ao Fenix 8.</p></div>
+ <div class="card"><h2>Histórico</h2><div class="list">${hist.map((l,i)=>`<div class="item" onclick="verLog(${S.logs.length-1-i})"><div><div class="t">${esc(l.nome)}</div><div class="s">${fmtD(l.data)} · ${l.dur} min · ${l.vol?l.vol.toLocaleString("pt-BR")+" kg volume":""}</div></div><span class="muted">›</span></div>`).join("")||'<div class="muted">Nenhum treino registrado ainda.</div>'}</div></div>`;
+}
+function abrirTreino(id){const t=TREINOS.find(x=>x.id===id);sessao={id,inicio:Date.now(),sets:{}};
+ t.blocos.forEach((b,bi)=>b.ex.forEach((e,ei)=>{const k=bi+"_"+ei;const last=S.cargas[e[0]]||"";sessao.sets[k]=Array.from({length:b.x},()=>({peso:last,reps:e[3]||"",ok:false}));}));
+ view="treinos";render();}
+function vSessao(m){
+ const t=TREINOS.find(x=>x.id===sessao.id);
+ m.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">${esc(t.nome)}</h2><span class="muted" id="cron">00:00</span></div><p class="muted">${esc(t.desc)}</p></div>
+ ${t.blocos.map((b,bi)=>`<div class="card">${b.ex.length>1?`<h3>Bloco ${bi+1} · ${b.x} voltas · descanso ${b.r}s</h3>`:""}
+  ${b.ex.map((e,ei)=>{const k=bi+"_"+ei;return `<h2 style="font-size:15px">${esc(e[0])} <span class="muted" style="font-weight:400;font-size:12px">${e[4]?e[4]+"s":"alvo "+e[3]+" reps"} · descanso ${b.r}s</span></h2>
+   <div class="setrow" style="margin-bottom:2px"><div class="n">#</div><div class="s muted" style="font-size:11px">Carga (kg)</div><div class="s muted" style="font-size:11px">${e[4]?"Segundos":"Reps"}</div><div></div></div>
+   ${sessao.sets[k].map((s,si)=>`<div class="setrow"><div class="n">${si+1}</div><input type="number" step="0.5" inputmode="decimal" value="${s.peso}" oninput="sessao.sets['${k}'][${si}].peso=this.value"><input type="number" inputmode="numeric" value="${s.reps}" oninput="sessao.sets['${k}'][${si}].reps=this.value"><button class="chk ${s.ok?"done":"sec"}" onclick="toggleSet('${k}',${si},this)">${s.ok?"✓":""}</button></div>`).join("")}`;}).join("")}
+ </div>`).join("")}
+ <div class="card"><label>Como foi?</label><textarea id="s_obs"></textarea><div class="row" style="margin-top:10px"><button onclick="fimTreino()">Finalizar treino</button><button class="sec" onclick="if(confirm('Descartar treino?')){sessao=null;render()}">Descartar</button></div></div>`;
+ clearInterval(window._cr);window._cr=setInterval(()=>{const s=Math.floor((Date.now()-sessao.inicio)/1000);const el=document.getElementById("cron");if(el)el.textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");},1000);
+}
+function toggleSet(k,si,btn){const s=sessao.sets[k][si];s.ok=!s.ok;btn.className="chk "+(s.ok?"done":"sec");btn.textContent=s.ok?"✓":"";
+ if(s.ok&&si+1<sessao.sets[k].length){const n=sessao.sets[k][si+1];if(!n.peso)n.peso=s.peso;if(!n.reps)n.reps=s.reps;}}
+function fimTreino(){const t=TREINOS.find(x=>x.id===sessao.id);let vol=0;const ex=[];
+ t.blocos.forEach((b,bi)=>b.ex.forEach((e,ei)=>{const k=bi+"_"+ei;const sets=sessao.sets[k].filter(s=>s.ok||s.reps);if(!sets.length)return;sets.forEach(s=>{vol+=(+s.peso||0)*(+s.reps||0);});const mp=Math.max(...sets.map(s=>+s.peso||0));if(mp)S.cargas[e[0]]=mp;ex.push({nome:e[0],sets:sets.map(s=>({peso:s.peso,reps:s.reps}))});}));
+ S.logs.push({id:t.id,nome:t.nome,data:hoje(),dur:Math.round((Date.now()-sessao.inicio)/60000),vol,ex,obs:document.getElementById("s_obs").value});
+ save();sessao=null;clearInterval(window._cr);toast("Treino salvo 💪");render();}
+function verLog(i){const l=S.logs[i];const m=document.getElementById("main");m.innerHTML=`<div class="card"><button class="sec sm" onclick="render()">← Voltar</button><h2 style="margin-top:10px">${esc(l.nome)}</h2><div class="muted">${fmtD(l.data)} · ${l.dur} min · volume ${l.vol.toLocaleString("pt-BR")} kg</div>${l.obs?`<p>${esc(l.obs)}</p>`:""}
+ <table>${l.ex.map(e=>`<tr><td>${esc(e.nome)}</td><td>${e.sets.map(s=>(s.peso||"-")+"×"+(s.reps||"-")).join(" · ")}</td></tr>`).join("")}</table>
+ <div class="row" style="margin-top:10px"><button class="danger sm" onclick="if(confirm('Apagar este treino?')){S.logs.splice(${i},1);save();render()}">Apagar</button></div></div>`;}
+
+/* ===== Exportar JSON Garmin Connect (mesma estrutura dos arquivos já validados) ===== */
+function exportGarmin(id){
+ const t=TREINOS.find(x=>x.id===id);
+ const ST={interval:{stepTypeId:3,stepTypeKey:"interval",displayOrder:3},rest:{stepTypeId:5,stepTypeKey:"rest",displayOrder:5},repeat:{stepTypeId:6,stepTypeKey:"repeat",displayOrder:6}};
+ const EC={reps:{conditionTypeId:10,conditionTypeKey:"reps",displayOrder:10,displayable:true},time:{conditionTypeId:2,conditionTypeKey:"time",displayOrder:2,displayable:true},iter:{conditionTypeId:7,conditionTypeKey:"iterations",displayOrder:7,displayable:false}};
+ const base=()=>({childStepId:1,preferredEndConditionUnit:null,endConditionCompare:null,targetValueOne:null,targetValueTwo:null,targetValueUnit:null,zoneNumber:null,secondaryTargetType:null,secondaryTargetValueOne:null,secondaryTargetValueTwo:null,secondaryTargetValueUnit:null,secondaryZoneNumber:null,endConditionZone:null,strokeType:{strokeTypeId:0,strokeTypeKey:null,displayOrder:0},equipmentType:{equipmentTypeId:0,equipmentTypeKey:null,displayOrder:0},workoutProvider:null,providerExerciseSourceId:null,weightValue:null});
+ let order=1,gid=30000000000,k=0;const steps=[];
+ t.blocos.forEach(b=>{k++;const g={type:"RepeatGroupDTO",stepId:gid+k*1000,stepOrder:order++,stepType:ST.repeat,childStepId:1,numberOfIterations:b.x,endConditionValue:b.x,preferredEndConditionUnit:null,endConditionCompare:null,endCondition:EC.iter,skipLastRestStep:true,smartRepeat:false,workoutSteps:[]};
+  let j=0;b.ex.forEach(e=>{j++;g.workoutSteps.push(Object.assign({type:"ExecutableStepDTO",stepId:gid+k*1000+j,stepOrder:order++,stepType:ST.interval,description:e[0],endCondition:e[4]?EC.time:EC.reps,endConditionValue:e[4]?e[4]:e[3],targetType:{workoutTargetTypeId:1,workoutTargetTypeKey:"no.target",displayOrder:1},category:e[1],exerciseName:e[2],weightUnit:{unitId:8,unitKey:"kilogram",factor:1000}},base()));});
+  j++;g.workoutSteps.push(Object.assign({type:"ExecutableStepDTO",stepId:gid+k*1000+j,stepOrder:order++,stepType:ST.rest,description:"Descanso "+b.r+"s",endCondition:EC.time,endConditionValue:b.r,targetType:null,category:null,exerciseName:null,weightUnit:null},base()));
+  steps.push(g);});
+ const sport={sportTypeId:5,sportTypeKey:"strength_training",displayOrder:5};
+ const w={workoutId:null,ownerId:null,workoutName:t.nome,description:t.desc,updatedDate:null,createdDate:null,sportType:sport,subSportType:null,trainingPlanId:null,author:null,sharedWithUsers:null,estimatedDurationInSecs:3600,estimatedDistanceInMeters:null,poolLength:null,poolLengthUnit:null,locale:null,workoutProvider:null,workoutSourceId:null,uploadTimestamp:null,atpPlanId:null,consumer:null,consumerName:null,consumerImageURL:null,consumerWebsiteURL:null,workoutNameI18nKey:null,descriptionI18nKey:null,avgTrainingSpeed:0,estimateType:null,estimatedDistanceUnit:{unitId:null,unitKey:null,factor:null},workoutThumbnailUrl:null,isSessionTransitionEnabled:null,shared:false,
+  workoutSegments:[{segmentOrder:1,sportType:sport,poolLengthUnit:null,poolLength:null,avgTrainingSpeed:null,estimatedDurationInSecs:null,estimatedDistanceInMeters:null,estimatedDistanceUnit:null,estimateType:null,description:t.nome,workoutSteps:steps}]};
+ download(`garmin_${t.id}.json`,JSON.stringify(w),"application/json");
+}
+function download(name,txt,type){ // mostra o conteúdo com botão Copiar (download direto não funciona em todos os navegadores)
+ let box=document.getElementById("dlbox");if(!box){box=document.createElement("div");box.id="dlbox";box.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:20;display:flex;align-items:flex-end";document.body.appendChild(box);}
+ box.innerHTML=`<div class="card" style="width:100%;max-height:85vh;overflow:auto;border-radius:18px 18px 0 0;margin:0;padding-bottom:calc(16px + env(safe-area-inset-bottom))"><h2>${esc(name)}</h2><p class="muted">Toque em Copiar e cole num arquivo com este nome (ou envie para si mesmo). Para o Garmin: salve como .json e importe no Garmin Connect.</p><textarea id="dltxt" style="min-height:120px;font-size:12px;font-family:monospace">${esc(txt)}</textarea><div class="row" style="margin-top:10px"><button id="dlcopy">Copiar</button><button class="sec" onclick="document.getElementById('dlbox').remove()">Fechar</button></div></div>`;
+ document.getElementById("dlcopy").onclick=async()=>{const ta=document.getElementById("dltxt");try{await navigator.clipboard.writeText(txt);toast("Copiado");}catch(e){ta.focus();ta.select();try{document.execCommand("copy");toast("Copiado");}catch(e2){toast("Selecione o texto e copie manualmente");}}};
+}
+
+/* ============ DIETA ============ */
+function vDieta(m,sub_){document.getElementById("hTitle").textContent="Dieta";sub_.textContent="Plano alimentar da nutricionista";
+ const d=S.diario[hoje()]||{};const chk=d.ref||{};
+ m.innerHTML=DIETA.map((r,i)=>`<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">${esc(r.ref)} ${r.hora?`<span class="muted" style="font-weight:400;font-size:13px">${r.hora}</span>`:""}</h2><button class="chk ${chk[i]?"done":"sec"}" onclick="marcarRef(${i})">${chk[i]?"✓":""}</button></div><ul style="margin:8px 0 0;padding-left:18px;line-height:1.5">${r.itens.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`).join("")+
+ `<div class="card"><h2>Água e extras</h2><div class="grid2"><div><label>Água (copos)</label><input id="agua" type="number" inputmode="numeric" value="${d.agua||""}" onchange="S.diario[hoje()]=Object.assign(S.diario[hoje()]||{},{agua:this.value});save()"></div><div><label>Fora do plano?</label><input id="extra" value="${esc(d.extra||"")}" placeholder="ex.: 1 brigadeiro" onchange="S.diario[hoje()]=Object.assign(S.diario[hoje()]||{},{extra:this.value});save()"></div></div></div>`;}
+function marcarRef(i){const d=S.diario[hoje()]=S.diario[hoje()]||{};d.ref=d.ref||{};d.ref[i]=!d.ref[i];save();render();}
+
+/* ============ CONFIG ============ */
+function vConfig(m,sub_){document.getElementById("hTitle").textContent="Ajustes";sub_.textContent="";
+ const n=S.logs.length,ne=Object.values(S.exames).reduce((a,e)=>a+Object.keys(e.hist).length,0);
+ m.innerHTML=`<div class="card"><h2>Perfil</h2><div class="grid2"><div><label>Nome</label><input id="p_nome" value="${esc(S.perfil.nome||"")}"></div><div><label>Altura (cm)</label><input id="p_alt" type="number" inputmode="numeric" value="${S.perfil.altura||""}"></div></div><div class="row" style="margin-top:8px"><button onclick="S.perfil.nome=document.getElementById('p_nome').value;S.perfil.altura=document.getElementById('p_alt').value;save();toast('Salvo')">Salvar</button></div></div>
+ <div class="card"><h2>Seus dados</h2><p class="muted">Tudo fica guardado só neste aparelho (${n} treinos, ${ne} resultados de exame, ${Object.keys(S.diario).length} dias de diário). Faça um backup de vez em quando.</p>
+  <div class="row"><button onclick="download('backup-saude-'+hoje()+'.json',JSON.stringify(S),'application/json')">Exportar backup</button><button class="sec" onclick="document.getElementById('imp').click()">Importar arquivo</button><input id="imp" type="file" accept=".json,application/json" class="hidden" onchange="importar(this)"></div>
+  <label style="margin-top:10px">Ou cole o backup aqui</label><textarea id="imptxt" placeholder='{"exames":...}'></textarea><div class="row" style="margin-top:8px"><button class="sec" onclick="importarTexto()">Importar texto colado</button></div></div>
+ <div class="card"><h2>Instalar no iPhone</h2><ol class="muted" style="padding-left:18px;line-height:1.6"><li>Abra esta página no Safari.</li><li>Toque em Compartilhar (quadrado com seta).</li><li>"Adicionar à Tela de Início".</li></ol></div>
+ <div class="card"><h2>Zona de perigo</h2><button class="danger" onclick="if(confirm('Apagar TODOS os dados deste aparelho?')){localStorage.removeItem(KEY);S=load();render()}">Apagar tudo</button></div>
+ <p class="muted" style="text-align:center">Minha Saúde · v0.1 · 11/11/2026</p>`;}
+function importarTexto(){try{const s=JSON.parse(document.getElementById("imptxt").value);if(!s.exames)throw 0;S=s;save();toast("Backup importado");render();}catch(e){toast("Texto inválido");}}
+function importar(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const s=JSON.parse(r.result);if(!s.exames)throw 0;S=s;save();toast("Backup importado");render();}catch(e){toast("Arquivo inválido");}};r.readAsText(f);}
+
+render();
+</script>
+</body>
+</html>
