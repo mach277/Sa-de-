@@ -202,18 +202,20 @@ const DIETA = [
 /* ============ ESTADO ============ */
 const KEY="saude.v1";
 let S = load();
+function norm(x){x.exames=x.exames||{};x.diario=x.diario||{};x.logs=x.logs||[];x.cargas=x.cargas||{};x.perfil=x.perfil||{};x.atividades=x.atividades||[];return x;}
 function load(){
- try{const s=JSON.parse(localStorage.getItem(KEY)); if(s) return s;}catch(e){}
- return {exames:JSON.parse(JSON.stringify(SEED_EXAMES)),diario:{},logs:[],cargas:{},perfil:{nome:"",nasc:"",altura:""}};
+ try{const s=JSON.parse(localStorage.getItem(KEY)); if(s) return norm(s);}catch(e){}
+ return norm({exames:JSON.parse(JSON.stringify(SEED_EXAMES)),diario:{},logs:[],cargas:{},perfil:{nome:"",nasc:"",altura:""}});
 }
 function save(){ try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){toast("Não consegui salvar no aparelho");} }
 function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800);}
-const hoje=()=>new Date().toISOString().slice(0,10);
+const iso=d=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*6e4);return z.toISOString().slice(0,10);};
+const hoje=()=>iso(new Date());
 const fmtD=d=>{const [y,m,dd]=d.split("-");return `${dd}/${m}/${y}`;};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 /* ============ VERSÃO / ATUALIZAÇÃO ============ */
-const APP_VERSION="0.4";
+const APP_VERSION="0.5";
 function atualizar(){ // recarrega ignorando o cache do Safari
  toast("Atualizando…");
  const u=location.pathname+"?v="+Date.now()+location.hash;
@@ -228,9 +230,10 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden)checarVers
 if(location.protocol.startsWith("http"))setTimeout(checarVersao,1500);
 
 /* ============ DATAS ============ */
-let diaSel=hoje();
-const addDias=(d,n)=>{const x=new Date(d+"T12:00:00");x.setDate(x.getDate()+n);return x.toISOString().slice(0,10);};
-const segunda=d=>{const x=new Date(d+"T12:00:00");const wd=(x.getDay()+6)%7;x.setDate(x.getDate()-wd);return x.toISOString().slice(0,10);};
+let diaSel=hoje(), diaCarga=hoje();
+document.addEventListener("visibilitychange",()=>{if(document.hidden)return;if(hoje()!==diaCarga){if(diaSel===diaCarga)diaSel=hoje();diaCarga=hoje();if(!sessao)render();}});
+const addDias=(d,n)=>{const x=new Date(d+"T12:00:00");x.setDate(x.getDate()+n);return iso(x);};
+const segunda=d=>{const x=new Date(d+"T12:00:00");const wd=(x.getDay()+6)%7;x.setDate(x.getDate()-wd);return iso(x);};
 const diaSemana=d=>new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"});
 function dia(d){return S.diario[d]=S.diario[d]||{};}
 function adesao(x){if(!x||!x.ref)return null;const n=Object.values(x.ref).filter(Boolean).length;return n?Math.round(n/DIETA.length*100):(x.dietaOk?100:null);}
@@ -246,6 +249,52 @@ function render(){
  window.scrollTo(0,0);
 }
 
+function renderKeep(){const y=window.scrollY;render();window.scrollTo(0,y);}
+
+/* ============ CALORIAS / ATIVIDADES ============ */
+const TIPOS_ATIV=["Corrida","Caminhada","Bicicleta","Esteira","Elíptico","Natação","HIIT","Funcional","Futebol","Musculação (extra)","Calistenia (extra)","Outro"];
+const REFS=["Desjejum","Colação","Almoço","Lanche/jantar","Outro"];
+const KCAL_KG=7700; // ≈ kcal por kg de gordura (estimativa)
+let _chips=[];
+const nf=n=>Math.round(n).toLocaleString("pt-BR");
+function idade(d){const n=S.perfil.nasc;if(!n)return null;const a=new Date(n+"T12:00:00"),b=new Date(d+"T12:00:00");let i=b.getFullYear()-a.getFullYear();if(b.getMonth()<a.getMonth()||(b.getMonth()===a.getMonth()&&b.getDate()<a.getDate()))i--;return i;}
+function pesoEm(d){const todos=Object.keys(S.diario).filter(k=>+S.diario[k].peso).sort();if(!todos.length)return null;const ate=todos.filter(k=>k<=d);return +S.diario[ate.length?ate[ate.length-1]:todos[0]].peso;}
+function tmb(d){const kg=pesoEm(d),cm=+S.perfil.altura,id=idade(d);if(!kg||!cm||id===null)return null;return Math.round(10*kg+6.25*cm-5*id+(S.perfil.sexo==="f"?-161:5));}
+function atividadesDoDia(d){
+ const a=[];
+ S.logs.forEach((l,i)=>{if(l.data===d)a.push({k:"log",i,tipo:"Musculação",nome:l.nome,dur:+l.dur||0,dist:0,kcal:+l.kcal||0,fc:+l.fc||0});});
+ S.atividades.forEach((x,i)=>{if(x.data===d)a.push({k:"ativ",i,tipo:x.tipo,nome:x.nome||x.tipo,dur:+x.dur||0,dist:+x.dist||0,kcal:+x.kcal||0,fc:+x.fc||0});});
+ return a;
+}
+function comidasDoDia(d){return (S.diario[d]&&S.diario[d].comidas)||[];}
+function ingeridas(d){const c=comidasDoDia(d);return c.length?c.reduce((a,x)=>a+(+x.k||0),0):null;}
+function gastoDia(d){ // gasto real = total do Garmin; sem ele, estima pelo metabolismo basal
+ const x=S.diario[d]||{},tot=+x.kcal||0,at=+x.kcala||0;
+ const tr=atividadesDoDia(d).reduce((a,y)=>a+y.kcal,0),t=tmb(d);
+ if(tot)return {v:tot,fonte:"total do Garmin",real:true};
+ if(at&&t)return {v:t+at,fonte:"basal estimado + ativas do Garmin",real:false};
+ if(tr&&t)return {v:Math.round(t*1.2+tr),fonte:"basal × 1,2 + treinos (estimativa)",real:false};
+ return null;
+}
+function htmlBalanco(d){
+ const g=gastoDia(d),i=ingeridas(d),ehHoje=d===hoje();
+ const saldo=(g&&i!==null)?i-g.v:null,def=saldo===null?null:-saldo;
+ const falta=!g?"Informe o total do dia no Garmin (card abaixo)"+(S.perfil.altura&&S.perfil.nasc?".":", ou preencha altura e nascimento em Ajustes para uma estimativa."):"";
+ return `<h2>Balanço do dia</h2><div class="kpis">
+  <div class="kpi"><div class="l">${g&&!g.real?"Gasto estimado":"Gasto real"}</div><div class="v">${g?nf(g.v):"–"}<span class="muted" style="font-size:12px"> kcal</span></div><div class="l">${g?g.fonte:"sem dado"}</div></div>
+  <div class="kpi"><div class="l">Consumido</div><div class="v">${i!==null?nf(i):"–"}<span class="muted" style="font-size:12px"> kcal</span></div><div class="l">${comidasDoDia(d).length} item(ns)</div></div>
+  <div class="kpi" style="grid-column:span 2"><div class="l">${def===null?"Saldo":def>=0?"Déficit":"Superávit"}</div><div class="v ${def>0?"good":def<0?"badc":""}">${def===null?"–":nf(Math.abs(def))+" kcal"}</div>${def!==null?`<div class="l">≈ ${nf(Math.abs(def)/KCAL_KG*1000)} g de gordura ${def>=0?"a menos":"a mais"} (estimativa)</div>`:""}</div></div>
+  ${falta?`<p class="muted" style="margin:8px 0 0">${falta}</p>`:""}
+  ${ehHoje&&g&&g.real?`<p class="muted" style="margin:8px 0 0">O total do Garmin cresce ao longo do dia: o saldo só fecha à noite.</p>`:""}
+  ${def!==null&&def>1000&&!ehHoje?`<p class="muted" style="margin:8px 0 0">⚠️ Déficit acima de 1.000 kcal: confira se lançou tudo o que comeu.</p>`:""}`;
+}
+function atualizarBalanco(){const el=document.getElementById("balanco");if(el)el.innerHTML=htmlBalanco(diaSel);}
+function chipsComida(){
+ const cont={};
+ Object.keys(S.diario).sort().reverse().slice(0,60).forEach(k=>comidasDoDia(k).forEach(c=>{if(!c.n||!+c.k)return;const key=c.n+"|"+c.k;cont[key]=cont[key]||{n:c.n,k:+c.k,r:c.r,c:0};cont[key].c++;}));
+ return Object.values(cont).sort((a,b)=>b.c-a.c).slice(0,8);
+}
+
 /* ============ HOJE / DIÁRIO ============ */
 function vHoje(m,sub_){
  const ehHoje=diaSel===hoje();
@@ -254,9 +303,10 @@ function vHoje(m,sub_){
  const d=S.diario[diaSel]||{};
  const dias=Object.keys(S.diario).sort();
  const wd=new Date(diaSel+"T12:00:00").getDay(); const tr=TREINOS[[null,0,1,2,3,4,null][wd]];
- const treinou=S.logs.some(l=>l.data===diaSel);
+ const feitos=atividadesDoDia(diaSel),temForca=feitos.some(a=>a.k==="log"),kcalAtiv=feitos.reduce((a,x)=>a+x.kcal,0);
+ const comidas=comidasDoDia(diaSel),totCom=ingeridas(diaSel);
+ _chips=chipsComida();
  const ad=adesao(d);
- // pesagem da semana pendente?
  const sem=segunda(hoje()); const pesouSemana=dias.some(k=>k>=sem&&k<=hoje()&&S.diario[k].peso);
  const diasBkp=S.ultimoBackup?Math.floor((Date.now()-new Date(S.ultimoBackup).getTime())/864e5):null;
  const temDados=dias.length+S.logs.length>3;
@@ -269,16 +319,30 @@ function vHoje(m,sub_){
   <button class="sec sm" ${ehHoje?"disabled style='opacity:.4'":""} onclick="diaSel=addDias(diaSel,1);render()">Próximo ›</button></div>
   ${!ehHoje?`<div class="row" style="margin-top:8px;justify-content:center"><button class="sm" onclick="diaSel=hoje();render()">Voltar para hoje</button></div>`:""}
  </div>
- <div class="card"><h2>Treino ${ehHoje?"de hoje":"do dia"}</h2>
-  ${treinou?`<div class="item"><div class="t good">✓ Treino registrado</div></div>`:tr?`<div class="item"><div><div class="t">${esc(tr.nome)}</div><div class="s">${esc(tr.desc)}</div></div>${ehHoje?`<button class="sm" onclick="abrirTreino('${tr.id}')">Iniciar</button>`:`<button class="sec sm" onclick="marcarTreino('${tr.id}')">Marcar feito</button>`}</div>`:`<div class="muted">Dia de descanso. Caminhada leve ou mobilidade.</div>`}
- </div>
- <div class="card"><h2>Gasto calórico (Garmin)</h2>
+ <div class="card" id="balanco">${htmlBalanco(diaSel)}</div>
+ <div class="card"><h2>Gasto do dia (Garmin)</h2>
   <div class="grid3">
-   <div><label>Calorias totais</label><input id="d_kcal" type="number" inputmode="numeric" value="${d.kcal||""}" placeholder="ex. 2600"></div>
-   <div><label>Calorias ativas</label><input id="d_kcala" type="number" inputmode="numeric" value="${d.kcala||""}" placeholder="ex. 650"></div>
+   <div><label>Total do dia (kcal)</label><input id="d_kcal" type="number" inputmode="numeric" value="${d.kcal||""}" placeholder="ex. 2600"></div>
+   <div><label>Ativas (kcal)</label><input id="d_kcala" type="number" inputmode="numeric" value="${d.kcala||""}" placeholder="ex. 650"></div>
    <div><label>Passos</label><input id="d_passos" type="number" inputmode="numeric" value="${d.passos||""}"></div>
   </div>
-  <p class="muted" style="margin:6px 0 0">No app Garmin Connect: Hoje → Calorias (totais e ativas).</p>
+  <p class="muted" style="margin:6px 0 0">No Garmin Connect: Hoje → Calorias. O <b>total</b> (repouso + ativas) é o seu gasto real e é o que entra no saldo.</p>
+ </div>
+ <div class="card"><h2>Treino e cardio</h2>
+  ${!temForca&&tr?`<div class="item" style="margin-bottom:8px"><div><div class="t">${esc(tr.nome)}</div><div class="s">Planejado para ${tr.dia}</div></div><div class="row" style="flex-wrap:nowrap">${ehHoje?`<button class="sm" onclick="abrirTreino('${tr.id}')">Iniciar</button>`:""}<button class="sec sm" onclick="marcarTreino('${tr.id}')">Marcar feito</button></div></div>`:!temForca?`<div class="muted" style="margin-bottom:8px">Sem treino de força planejado neste dia.</div>`:""}
+  ${feitos.length?`<div class="list">${feitos.map(a=>`<div class="item" onclick="editarAtiv('${a.k}',${a.i})"><div><div class="t">${esc(a.nome)}</div><div class="s">${[a.dur&&a.dur+" min",a.dist&&a.dist+" km",a.fc&&"FC "+a.fc,a.kcal?nf(a.kcal)+" kcal":"informar kcal ›"].filter(Boolean).join(" · ")}</div></div><span class="muted">›</span></div>`).join("")}</div>`:""}
+  ${kcalAtiv?`<p class="muted" style="margin:8px 0 0">Atividades: ${nf(kcalAtiv)} kcal (já estão dentro do total do Garmin).</p>`:""}
+  <details style="margin-top:8px"><summary>＋ Registrar cardio / outra atividade</summary>${formAtiv(false)}</details>
+ </div>
+ <div class="card"><h2>Calorias consumidas</h2>
+  ${comidas.length?`<div class="list">${comidas.map((c,i)=>`<div class="item"><div><div class="t">${esc(c.n||"Item")}</div><div class="s">${esc(c.r||"")}</div></div><div class="row" style="flex-wrap:nowrap"><b>${nf(c.k)} kcal</b><button class="sec sm" onclick="delComida(${i})">✕</button></div></div>`).join("")}</div><div class="row" style="justify-content:space-between;margin:8px 0 0"><span class="muted">Total</span><b>${nf(totCom)} kcal</b></div>`:`<div class="muted">Nada lançado neste dia.</div>`}
+  ${_chips.length?`<label style="margin-top:10px">Repetir um item usado antes</label><div class="row">${_chips.map((c,i)=>`<button class="sec sm" onclick="addChip(${i})">${esc(c.n)} · ${nf(c.k)}</button>`).join("")}</div>`:""}
+  <div class="grid3" style="margin-top:10px;grid-template-columns:1fr 1.3fr .8fr">
+   <div><label>Refeição</label><select id="c_ref">${REFS.map(r=>`<option>${r}</option>`).join("")}</select></div>
+   <div><label>O quê</label><input id="c_n" placeholder="ex.: almoço"></div>
+   <div><label>kcal</label><input id="c_k" type="number" inputmode="numeric"></div>
+  </div>
+  <div class="row" style="margin-top:8px"><button onclick="addComida()">Adicionar</button><button class="sec" onclick="copiarComidas()">Copiar do dia anterior</button></div>
  </div>
  <div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Dieta</h2><span class="pill ${ad===100?"ok":ad>=50?"lo":ad===null?"":"hi"}">${ad===null?"sem registro":ad+"% do plano"}</span></div>
   <div class="list" style="margin-top:10px">${DIETA.map((r,i)=>`<div class="item" onclick="marcarRef(${i})"><div><div class="t">${esc(r.ref)}</div><div class="s">${r.hora||"&nbsp;"}</div></div><button class="chk ${d.ref&&d.ref[i]?"done":"sec"}">${d.ref&&d.ref[i]?"✓":""}</button></div>`).join("")}</div>
@@ -300,8 +364,38 @@ function vHoje(m,sub_){
  </div>
  <div style="position:sticky;bottom:calc(80px + env(safe-area-inset-bottom));z-index:3;margin-bottom:12px"><button style="width:100%;box-shadow:0 6px 20px rgba(0,0,0,.4)" onclick="salvarDia()">Salvar ${ehHoje?"o dia":fmtD(diaSel)}</button></div>
  <div class="card"><h2>Últimos dias</h2>
-  <div class="list">${dias.slice(-7).reverse().map(k=>{const x=S.diario[k];const a=adesao(x);return `<div class="item" onclick="diaSel='${k}';render()"><div><div class="t">${diaSemana(k)}</div><div class="s">${[x.peso&&x.peso+" kg",x.kcal&&x.kcal+" kcal",x.kcala&&x.kcala+" ativas",a!==null&&"dieta "+a+"%",S.logs.some(l=>l.data===k)&&"treinou"].filter(Boolean).join(" · ")||"–"}</div></div><span class="muted">›</span></div>`;}).join("")||'<div class="muted">Nada ainda.</div>'}</div>
+  <div class="list">${dias.slice(-7).reverse().map(k=>{const x=S.diario[k];const a=adesao(x);const g=gastoDia(k),ing=ingeridas(k);const n=atividadesDoDia(k).length;return `<div class="item" onclick="diaSel='${k}';render()"><div><div class="t">${diaSemana(k)}</div><div class="s">${[x.peso&&x.peso+" kg",g&&"gasto "+nf(g.v),ing!==null&&"comeu "+nf(ing),a!==null&&"dieta "+a+"%",n&&n+" atividade(s)"].filter(Boolean).join(" · ")||"–"}</div></div><span class="muted">›</span></div>`;}).join("")||'<div class="muted">Nada ainda.</div>'}</div>
  </div>`;
+}
+function formAtiv(comData){
+ return `<div class="grid2" style="margin-top:8px"><div><label>Tipo</label><select id="a_tipo">${TIPOS_ATIV.map(t=>`<option>${t}</option>`).join("")}</select></div><div><label>Nome (opcional)</label><input id="a_nome" placeholder="ex.: corrida leve"></div>
+ ${comData?`<div><label>Data</label><input id="a_data" type="date" value="${hoje()}" max="${hoje()}"></div><div></div>`:""}
+ <div><label>Duração (min)</label><input id="a_dur" type="number" inputmode="numeric"></div>
+ <div><label>Distância (km)</label><input id="a_dist" type="number" step="0.01" inputmode="decimal"></div>
+ <div><label>FC média (bpm)</label><input id="a_fc" type="number" inputmode="numeric"></div>
+ <div><label>Calorias (Garmin)</label><input id="a_kcal" type="number" inputmode="numeric"></div></div>
+ <div class="row" style="margin-top:8px"><button onclick="addAtiv(${comData?1:0})">Adicionar</button></div>`;
+}
+function addAtiv(comData){
+ const g=id=>{const el=document.getElementById(id);return el?el.value:"";};
+ const dur=+g("a_dur"),kcal=+g("a_kcal");
+ if(!dur&&!kcal)return toast("Informe a duração ou as calorias");
+ if(view==="hoje")lerCampos();
+ S.atividades.push({data:comData?(g("a_data")||hoje()):diaSel,tipo:g("a_tipo"),nome:g("a_nome").trim(),dur,dist:+g("a_dist")||0,fc:+g("a_fc")||0,kcal});
+ save();toast("Atividade adicionada ✓");renderKeep();
+}
+function addComida(){
+ lerCampos();const g=id=>document.getElementById(id).value;const k=+g("c_k");
+ if(!k)return toast("Informe as calorias");
+ const c=dia(diaSel);c.comidas=c.comidas||[];c.comidas.push({n:g("c_n").trim(),k,r:g("c_ref")});
+ save();toast("Adicionado ✓");renderKeep();
+}
+function addChip(i){lerCampos();const x=_chips[i];const c=dia(diaSel);c.comidas=c.comidas||[];c.comidas.push({n:x.n,k:x.k,r:x.r});save();toast("Adicionado ✓");renderKeep();}
+function delComida(i){lerCampos();dia(diaSel).comidas.splice(i,1);save();renderKeep();}
+function copiarComidas(){
+ const src=comidasDoDia(addDias(diaSel,-1));if(!src.length)return toast("O dia anterior não tem itens");
+ lerCampos();const c=dia(diaSel);c.comidas=(c.comidas||[]).concat(src.map(x=>({n:x.n,k:x.k,r:x.r})));
+ save();toast("Copiado do dia anterior ✓");renderKeep();
 }
 function lerCampos(){
  const g=id=>{const el=document.getElementById(id);return el?el.value:undefined;};
@@ -309,8 +403,12 @@ function lerCampos(){
  ["peso","cint","agua","ps","pd","fc","sono","hum","obs","kcal","kcala","passos","extra"].forEach(k=>{const v=g("d_"+k);if(v!==undefined)d[k]=v;});
 }
 function salvarDia(){lerCampos();save();toast("Salvo ✓");render();}
-function todasRef(){lerCampos();const d=dia(diaSel);d.ref={};DIETA.forEach((r,i)=>d.ref[i]=true);save();render();}
-function marcarTreino(id){const t=TREINOS.find(x=>x.id===id);S.logs.push({id,nome:t.nome,data:diaSel,dur:0,vol:0,ex:[],obs:"marcado manualmente"});save();toast("Treino marcado");render();}
+function todasRef(){lerCampos();const d=dia(diaSel);d.ref={};DIETA.forEach((r,i)=>d.ref[i]=true);save();renderKeep();}
+function marcarTreino(id){
+ const t=TREINOS.find(x=>x.id===id);if(view==="hoje")lerCampos();
+ S.logs.push({id,nome:t.nome,data:diaSel,dur:0,vol:0,ex:[],obs:"marcado manualmente",fc:0,kcal:0});
+ save();toast("Treino marcado: informe os dados do Garmin");editarAtiv("log",S.logs.length-1);
+}
 
 /* ============ GRÁFICO SVG ============ */
 function chart(pts,ref){ // pts: [[date,val]]; ref:[min,max]
@@ -369,12 +467,23 @@ function novoMarcador(){const n=document.getElementById("n_nome").value.trim();i
 /* ============ TREINOS ============ */
 let sessao=null; // {id, inicio, sets:{exKey:[{peso,reps,ok}]}}
 function vTreinos(m,sub_){
- document.getElementById("hTitle").textContent="Treinos"; sub_.textContent="Ficha do personal + calistenia";
+ document.getElementById("hTitle").textContent="Treinos"; sub_.textContent="Força, cardio e dados do Garmin";
  if(sessao){return vSessao(m);}
- const hist=S.logs.slice().reverse().slice(0,10);
- m.innerHTML=`<div class="card"><h2>Semana</h2><div class="list">${TREINOS.map(t=>`<div class="item"><div><div class="t">${esc(t.nome)}</div><div class="s">${t.dia} · ${t.blocos.reduce((a,b)=>a+b.ex.length,0)} exercícios</div></div><div class="row"><button class="sec sm" onclick="exportGarmin('${t.id}')">Garmin</button><button class="sm" onclick="abrirTreino('${t.id}')">Iniciar</button></div></div>`).join("")}</div>
-  <p class="muted">"Garmin" baixa o arquivo JSON do treino para importar no Garmin Connect (Treinos → Importar) e enviar ao Fenix 8.</p></div>
- <div class="card"><h2>Histórico</h2><div class="list">${hist.map((l,i)=>`<div class="item" onclick="verLog(${S.logs.length-1-i})"><div><div class="t">${esc(l.nome)}</div><div class="s">${fmtD(l.data)} · ${l.dur} min · ${l.vol?l.vol.toLocaleString("pt-BR")+" kg volume":""}</div></div><span class="muted">›</span></div>`).join("")||'<div class="muted">Nenhum treino registrado ainda.</div>'}</div></div>`;
+ const sem=segunda(hoje()),fimS=addDias(sem,6);
+ const todos=[...S.logs.map((l,i)=>({k:"log",i,data:l.data,nome:l.nome,dur:+l.dur||0,kcal:+l.kcal||0,dist:0})),...S.atividades.map((a,i)=>({k:"ativ",i,data:a.data,nome:a.nome||a.tipo,dur:+a.dur||0,kcal:+a.kcal||0,dist:+a.dist||0}))];
+ const wk=todos.filter(a=>a.data>=sem&&a.data<=fimS);
+ const forca=wk.filter(a=>a.k==="log").length,outras=wk.filter(a=>a.k==="ativ").length;
+ const min=wk.reduce((a,x)=>a+x.dur,0),kc=wk.reduce((a,x)=>a+x.kcal,0);
+ const hist=todos.slice().sort((a,b)=>b.data.localeCompare(a.data)).slice(0,15);
+ m.innerHTML=`<div class="card"><h2>Esta semana</h2><div class="kpis">
+  <div class="kpi"><div class="l">Treinos de força</div><div class="v">${forca}/5</div></div>
+  <div class="kpi"><div class="l">Cardio e outras</div><div class="v">${outras}</div></div>
+  <div class="kpi"><div class="l">Tempo ativo</div><div class="v">${nf(min)} min</div></div>
+  <div class="kpi"><div class="l">Calorias em atividades</div><div class="v">${nf(kc)}</div></div></div></div>
+ <div class="card"><h2>Plano</h2><div class="list">${TREINOS.map(t=>`<div class="item"><div><div class="t">${esc(t.nome)}</div><div class="s">${t.dia} · ${t.blocos.reduce((a,b)=>a+b.ex.length,0)} exercícios</div></div><div class="row" style="flex-wrap:nowrap"><button class="sec sm" onclick="exportGarmin('${t.id}')">Garmin</button><button class="sm" onclick="abrirTreino('${t.id}')">Iniciar</button></div></div>`).join("")}</div>
+  <p class="muted">"Garmin" mostra o treino em JSON para copiar. Os mesmos arquivos já estão na sua pasta no Mac (GARMIN).</p></div>
+ <div class="card"><h2>Registrar cardio / outra atividade</h2>${formAtiv(true)}</div>
+ <div class="card"><h2>Histórico</h2><p class="muted" style="margin-top:0">Toque num item para informar ou corrigir duração, FC e calorias do Garmin.</p><div class="list">${hist.map(a=>`<div class="item" onclick="editarAtiv('${a.k}',${a.i})"><div><div class="t">${esc(a.nome)}</div><div class="s">${[fmtD(a.data),a.dur&&a.dur+" min",a.dist&&a.dist+" km",a.kcal?nf(a.kcal)+" kcal":"sem kcal"].filter(Boolean).join(" · ")}</div></div><span class="muted">›</span></div>`).join("")||'<div class="muted">Nenhum treino registrado ainda.</div>'}</div></div>`;
 }
 function abrirTreino(id){const t=TREINOS.find(x=>x.id===id);sessao={id,inicio:Date.now(),sets:{}};
  t.blocos.forEach((b,bi)=>b.ex.forEach((e,ei)=>{const k=bi+"_"+ei;const last=S.cargas[e[0]]||"";sessao.sets[k]=Array.from({length:b.x},()=>({peso:last,reps:e[3]||"",ok:false}));}));
@@ -387,18 +496,40 @@ function vSessao(m){
    <div class="setrow" style="margin-bottom:2px"><div class="n">#</div><div class="s muted" style="font-size:11px">Carga (kg)</div><div class="s muted" style="font-size:11px">${e[4]?"Segundos":"Reps"}</div><div></div></div>
    ${sessao.sets[k].map((s,si)=>`<div class="setrow"><div class="n">${si+1}</div><input type="number" step="0.5" inputmode="decimal" value="${s.peso}" oninput="sessao.sets['${k}'][${si}].peso=this.value"><input type="number" inputmode="numeric" value="${s.reps}" oninput="sessao.sets['${k}'][${si}].reps=this.value"><button class="chk ${s.ok?"done":"sec"}" onclick="toggleSet('${k}',${si},this)">${s.ok?"✓":""}</button></div>`).join("")}`;}).join("")}
  </div>`).join("")}
- <div class="card"><label>Como foi?</label><textarea id="s_obs"></textarea><div class="row" style="margin-top:10px"><button onclick="fimTreino()">Finalizar treino</button><button class="sec" onclick="if(confirm('Descartar treino?')){sessao=null;render()}">Descartar</button></div></div>`;
+ <div class="card"><div class="grid3"><div><label>Duração (min)</label><input id="s_dur" type="number" inputmode="numeric" placeholder="automático" value="${sessao.dur||""}" oninput="sessao.dur=this.value"></div><div><label>FC média</label><input id="s_fc" type="number" inputmode="numeric" value="${sessao.fc||""}" oninput="sessao.fc=this.value"></div><div><label>Calorias (Garmin)</label><input id="s_kcal" type="number" inputmode="numeric" value="${sessao.kcal||""}" oninput="sessao.kcal=this.value"></div></div><p class="muted" style="margin:6px 0">Pode deixar em branco e preencher depois, no histórico, quando sincronizar o relógio.</p><label>Como foi?</label><textarea id="s_obs" oninput="sessao.obs=this.value">${esc(sessao.obs||"")}</textarea><div class="row" style="margin-top:10px"><button onclick="fimTreino()">Finalizar treino</button><button class="sec" onclick="if(confirm('Descartar treino?')){sessao=null;render()}">Descartar</button></div></div>`;
  clearInterval(window._cr);window._cr=setInterval(()=>{const s=Math.floor((Date.now()-sessao.inicio)/1000);const el=document.getElementById("cron");if(el)el.textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");},1000);
 }
 function toggleSet(k,si,btn){const s=sessao.sets[k][si];s.ok=!s.ok;btn.className="chk "+(s.ok?"done":"sec");btn.textContent=s.ok?"✓":"";
  if(s.ok&&si+1<sessao.sets[k].length){const n=sessao.sets[k][si+1];if(!n.peso)n.peso=s.peso;if(!n.reps)n.reps=s.reps;}}
 function fimTreino(){const t=TREINOS.find(x=>x.id===sessao.id);let vol=0;const ex=[];
  t.blocos.forEach((b,bi)=>b.ex.forEach((e,ei)=>{const k=bi+"_"+ei;const sets=sessao.sets[k].filter(s=>s.ok||s.reps);if(!sets.length)return;sets.forEach(s=>{vol+=(+s.peso||0)*(+s.reps||0);});const mp=Math.max(...sets.map(s=>+s.peso||0));if(mp)S.cargas[e[0]]=mp;ex.push({nome:e[0],sets:sets.map(s=>({peso:s.peso,reps:s.reps}))});}));
- S.logs.push({id:t.id,nome:t.nome,data:hoje(),dur:Math.round((Date.now()-sessao.inicio)/60000),vol,ex,obs:document.getElementById("s_obs").value});
+ S.logs.push({id:t.id,nome:t.nome,data:hoje(),dur:+sessao.dur||Math.round((Date.now()-sessao.inicio)/60000),vol,ex,obs:sessao.obs||"",fc:+sessao.fc||0,kcal:+sessao.kcal||0});
  save();sessao=null;clearInterval(window._cr);toast("Treino salvo 💪");render();}
-function verLog(i){const l=S.logs[i];const m=document.getElementById("main");m.innerHTML=`<div class="card"><button class="sec sm" onclick="render()">← Voltar</button><h2 style="margin-top:10px">${esc(l.nome)}</h2><div class="muted">${fmtD(l.data)} · ${l.dur} min · volume ${l.vol.toLocaleString("pt-BR")} kg</div>${l.obs?`<p>${esc(l.obs)}</p>`:""}
- <table>${l.ex.map(e=>`<tr><td>${esc(e.nome)}</td><td>${e.sets.map(s=>(s.peso||"-")+"×"+(s.reps||"-")).join(" · ")}</td></tr>`).join("")}</table>
- <div class="row" style="margin-top:10px"><button class="danger sm" onclick="if(confirm('Apagar este treino?')){S.logs.splice(${i},1);save();render()}">Apagar</button></div></div>`;}
+function verLog(i){editarAtiv("log",i);}
+function editarAtiv(k,i){
+ const isLog=k==="log",a=isLog?S.logs[i]:S.atividades[i];if(!a)return render();
+ document.getElementById("main").innerHTML=`<div class="card"><button class="sec sm" onclick="render()">← Voltar</button>
+  <h2 style="margin-top:10px">${esc(isLog?a.nome:(a.nome||a.tipo))}</h2>
+  ${isLog&&a.vol?`<div class="muted">Volume de carga: ${nf(a.vol)} kg</div>`:""}
+  ${isLog?"":`<div class="grid2" style="margin-top:8px"><div><label>Tipo</label><select id="e_tipo">${TIPOS_ATIV.map(t=>`<option ${a.tipo===t?"selected":""}>${t}</option>`).join("")}</select></div><div><label>Nome (opcional)</label><input id="e_nome" value="${esc(a.nome||"")}"></div></div>`}
+  <div class="grid2" style="margin-top:8px">
+   <div><label>Data</label><input id="e_data" type="date" value="${a.data}" max="${hoje()}"></div>
+   <div><label>Duração (min)</label><input id="e_dur" type="number" inputmode="numeric" value="${a.dur||""}"></div>
+   ${isLog?"":`<div><label>Distância (km)</label><input id="e_dist" type="number" step="0.01" inputmode="decimal" value="${a.dist||""}"></div>`}
+   <div><label>FC média (bpm)</label><input id="e_fc" type="number" inputmode="numeric" value="${a.fc||""}"></div>
+   <div><label>Calorias (Garmin)</label><input id="e_kcal" type="number" inputmode="numeric" value="${a.kcal||""}"></div>
+  </div>
+  ${isLog?`<label style="margin-top:8px">Observações</label><textarea id="e_obs">${esc(a.obs||"")}</textarea>`:""}
+  ${isLog&&a.ex&&a.ex.length?`<h3>Séries registradas</h3><table>${a.ex.map(e=>`<tr><td>${esc(e.nome)}</td><td>${e.sets.map(s=>(s.peso||"-")+"×"+(s.reps||"-")).join(" · ")}</td></tr>`).join("")}</table>`:""}
+  <div class="row" style="margin-top:12px"><button onclick="salvarAtiv('${k}',${i})">Salvar</button><button class="danger sm" onclick="apagarAtiv('${k}',${i})">Apagar</button></div></div>`;
+}
+function salvarAtiv(k,i){
+ const a=k==="log"?S.logs[i]:S.atividades[i];const g=id=>{const el=document.getElementById(id);return el?el.value:"";};
+ a.data=g("e_data")||a.data;a.dur=+g("e_dur")||0;a.fc=+g("e_fc")||0;a.kcal=+g("e_kcal")||0;
+ if(k==="log"){a.obs=g("e_obs");}else{a.tipo=g("e_tipo");a.nome=g("e_nome").trim();a.dist=+g("e_dist")||0;}
+ save();toast("Salvo ✓");render();
+}
+function apagarAtiv(k,i){if(!confirm("Apagar este registro?"))return;(k==="log"?S.logs:S.atividades).splice(i,1);save();render();}
 
 /* ===== Exportar JSON Garmin Connect (mesma estrutura dos arquivos já validados) ===== */
 function exportGarmin(id){
@@ -430,11 +561,11 @@ function vDieta(m,sub_){document.getElementById("hTitle").textContent="Dieta";su
  m.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><div><div class="t" style="font-weight:600">${diaSel===hoje()?"Hoje":diaSemana(diaSel)}</div><div class="muted">Toque no ✓ de cada refeição feita conforme o plano</div></div><span class="pill ${ad===100?"ok":ad>=50?"lo":ad===null?"":"hi"}">${ad===null?"–":ad+"%"}</span></div></div>`+
  DIETA.map((r,i)=>`<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">${esc(r.ref)} ${r.hora?`<span class="muted" style="font-weight:400;font-size:13px">${r.hora}</span>`:""}</h2><button class="chk ${chk[i]?"done":"sec"}" onclick="marcarRef(${i})">${chk[i]?"✓":""}</button></div><ul style="margin:8px 0 0;padding-left:18px;line-height:1.5">${r.itens.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`).join("")+
  `<div class="card"><h2>Água e extras</h2><div class="grid2"><div><label>Água (copos)</label><input type="number" inputmode="numeric" value="${d.agua||""}" onchange="dia(diaSel).agua=this.value;save();toast('Salvo')"></div><div><label>Fora do plano?</label><input value="${esc(d.extra||"")}" placeholder="ex.: 1 brigadeiro" onchange="dia(diaSel).extra=this.value;save();toast('Salvo')"></div></div></div>`;}
-function marcarRef(i){if(view==="hoje")lerCampos();const d=dia(diaSel);d.ref=d.ref||{};d.ref[i]=!d.ref[i];save();render();}
+function marcarRef(i){if(view==="hoje")lerCampos();const d=dia(diaSel);d.ref=d.ref||{};d.ref[i]=!d.ref[i];save();renderKeep();}
 
 /* ============ EVOLUÇÃO ============ */
 function semanas(){
- const ks=new Set();Object.keys(S.diario).forEach(k=>ks.add(segunda(k)));S.logs.forEach(l=>ks.add(segunda(l.data)));
+ const ks=new Set();Object.keys(S.diario).forEach(k=>ks.add(segunda(k)));S.logs.forEach(l=>ks.add(segunda(l.data)));S.atividades.forEach(a=>ks.add(segunda(a.data)));
  return [...ks].sort().map(seg=>{
   const fim=addDias(seg,6);const ds=Object.keys(S.diario).filter(k=>k>=seg&&k<=fim).sort();
   const xs=ds.map(k=>S.diario[k]);
@@ -442,16 +573,40 @@ function semanas(){
   const soma=f=>xs.reduce((a,x)=>a+(+x[f]||0),0), cnt=f=>xs.filter(x=>+x[f]).length;
   const ads=xs.map(adesao).filter(a=>a!==null);
   const cint=ds.filter(k=>+S.diario[k].cint).map(k=>+S.diario[k].cint);
+  // balanço: só dias fechados (antes de hoje) com consumo e gasto lançados
+  let ingS=0,gasS=0,defS=0,defN=0;
+  for(let i=0;i<7;i++){const d=addDias(seg,i);if(d>=hoje())break;const ing=ingeridas(d),g=gastoDia(d);
+   if(ing!==null&&g){ingS+=ing;gasS+=g.v;defS+=g.v-ing;defN++;}}
   return {seg,fim,peso:pesos.length?pesos[pesos.length-1]:null,cint:cint.length?cint[cint.length-1]:null,
    kcal:soma("kcal"),kcalDias:cnt("kcal"),kcala:soma("kcala"),kcalaDias:cnt("kcala"),passos:soma("passos"),passosDias:cnt("passos"),
    adesao:ads.length?Math.round(ads.reduce((a,b)=>a+b,0)/ads.length):null,diasDieta:ads.length,
    treinos:S.logs.filter(l=>l.data>=seg&&l.data<=fim).length,
-   sono:cnt("sono")?(soma("sono")/cnt("sono")).toFixed(1):null};
+   sono:cnt("sono")?(soma("sono")/cnt("sono")).toFixed(1):null,
+   defN,defTotal:defS,ing:defN?Math.round(ingS/defN):null,gasto:defN?Math.round(gasS/defN):null,defMedio:defN?Math.round(defS/defN):null,perdaEst:defN?+(defS/KCAL_KG).toFixed(2):null};
  });
 }
 function barras(vals,labels,cor){
  const W=600,H=140,p=24,max=Math.max(...vals,1),bw=(W-2*p)/vals.length;
  return `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${vals.map((v,i)=>{const h=(H-2*p)*v/max;const x=p+i*bw+bw*.15;return `<rect x="${x.toFixed(1)}" y="${(H-p-h).toFixed(1)}" width="${(bw*.7).toFixed(1)}" height="${h.toFixed(1)}" rx="4" fill="${cor}"/>${v?`<text x="${(x+bw*.35).toFixed(1)}" y="${(H-p-h-5).toFixed(1)}" font-size="11" fill="#e2e8f0" text-anchor="middle">${v>=1000?(v/1000).toFixed(1)+"k":v}</text>`:""}<text x="${(x+bw*.35).toFixed(1)}" y="${H-7}" font-size="10" fill="#94a3b8" text-anchor="middle">${labels[i]}</text>`;}).join("")}</svg>`;
+}
+function barrasDiv(vals,labels){
+ const W=600,H=150,p=26,mid=H/2,max=Math.max(...vals.map(Math.abs),1),bw=(W-2*p)/vals.length;
+ return `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:150px"><line x1="${p}" x2="${W-p}" y1="${mid}" y2="${mid}" stroke="#334155"/>${vals.map((v,i)=>{const h=(mid-p)*Math.abs(v)/max,x=p+i*bw+bw*.15,y=v>=0?mid-h:mid;return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw*.7).toFixed(1)}" height="${h.toFixed(1)}" rx="4" fill="${v>=0?"#34d399":"#f87171"}"/><text x="${(x+bw*.35).toFixed(1)}" y="${(v>=0?y-5:y+h+13).toFixed(1)}" font-size="11" fill="#e2e8f0" text-anchor="middle">${Math.round(v)}</text><text x="${(x+bw*.35).toFixed(1)}" y="${H-6}" font-size="10" fill="#94a3b8" text-anchor="middle">${labels[i]}</text>`;}).join("")}</svg>`;
+}
+function htmlBalancoSemanal(ws,lab){
+ const cb=ws.filter(w=>w.defN>0);
+ if(!cb.length)return `<div class="card"><h2>Balanço calórico</h2><p class="muted">Lance o que comeu e o total do Garmin de cada dia (a partir de ontem) e o balanço semanal aparece aqui, com a perda estimada comparada ao peso real.</p></div>`;
+ let up=null;ws.forEach(w=>{w.dPeso=(w.peso&&up!==null)?+(w.peso-up).toFixed(1):null;if(w.peso)up=w.peso;});
+ const totDef=cb.reduce((a,w)=>a+w.defTotal,0),totN=cb.reduce((a,w)=>a+w.defN,0);
+ const defDia=Math.round(totDef/totN),est=+(totDef/KCAL_KG).toFixed(1);
+ return `<div class="card"><h2>Balanço calórico</h2><div class="kpis">
+  <div class="kpi"><div class="l">${defDia>=0?"Déficit":"Superávit"} médio por dia</div><div class="v ${defDia>0?"good":defDia<0?"badc":""}">${nf(Math.abs(defDia))} kcal</div><div class="l">${totN} dia(s) com consumo e gasto</div></div>
+  <div class="kpi"><div class="l">Gordura estimada</div><div class="v ${est>0?"good":est<0?"badc":""}">${est>0?"−":est<0?"+":""}${Math.abs(est)} kg</div><div class="l">déficit acumulado ÷ ${nf(KCAL_KG)} kcal/kg</div></div></div>
+  ${cb.length>1?`<div style="margin-top:10px">${barrasDiv(cb.slice(-8).map(w=>w.defMedio),cb.slice(-8).map(lab))}</div>`:""}
+  <div class="scroll" style="margin-top:8px"><table><tr><th>Semana</th><th>Comeu</th><th>Gastou</th><th>Déf./dia</th><th>Perda est.</th><th>Peso Δ</th></tr>
+  ${cb.slice().reverse().map(w=>`<tr><td>${lab(w)}<span class="muted" style="font-size:11px"> (${w.defN}d)</span></td><td>${nf(w.ing)}</td><td>${nf(w.gasto)}</td><td class="${w.defMedio>0?"good":"badc"}">${nf(w.defMedio)}</td><td>${w.perdaEst>0?"−":w.perdaEst<0?"+":""}${Math.abs(w.perdaEst)} kg</td><td class="${w.dPeso<0?"good":w.dPeso>0?"badc":""}">${w.dPeso===null?"–":(w.dPeso>0?"+":"")+w.dPeso}</td></tr>`).join("")}
+  </table></div>
+  <p class="muted" style="margin:8px 0 0">Perda est. = déficit ÷ 7.700 kcal por kg de gordura. É uma estimativa: compare com o Peso Δ real, que oscila com água e sal. Hoje não entra, porque o total do Garmin só fecha à meia-noite. "(5d)" = dias com consumo e gasto lançados.</p></div>`;
 }
 function vEvolucao(m,sub_){
  document.getElementById("hTitle").textContent="Evolução";sub_.textContent="Semana a semana (segunda a domingo)";
@@ -475,6 +630,7 @@ function vEvolucao(m,sub_){
   <div class="kpi"><div class="l">${meta?"Meta "+meta+" kg":"Meta de peso"}</div><div class="v">${meta?(falta>0?"faltam "+falta+" kg":"atingida 🎉"):`<button class="sm sec" onclick="view='config';render()">Definir</button>`}</div>${prev?`<div class="l">≈ ${prev} semanas no ritmo atual</div>`:""}</div>
  </div></div>
  ${comPeso.length>1?`<div class="card"><h2>Peso por semana</h2>${chart(comPeso.map(w=>[w.seg,w.peso]))}${meta?`<p class="muted" style="margin:4px 0 0">Meta: ${meta} kg</p>`:""}</div>`:""}
+ ${htmlBalancoSemanal(ws,lab)}
  ${ult8.some(w=>w.kcala)?`<div class="card"><h2>Calorias ativas por semana</h2>${barras(ult8.map(w=>w.kcala),ult8.map(lab),"#f59e0b")}<p class="muted" style="margin:4px 0 0">Soma das calorias ativas do Garmin em cada semana.</p></div>`:""}
  ${ult8.some(w=>w.adesao!==null)?`<div class="card"><h2>Adesão à dieta</h2>${barras(ult8.map(w=>w.adesao||0),ult8.map(lab),"#34d399")}<p class="muted" style="margin:4px 0 0">% das refeições feitas conforme o plano (média dos dias registrados).</p></div>`:""}
  <div class="card"><h2>Semanas</h2><div class="scroll"><table>
@@ -489,7 +645,10 @@ function vEvolucao(m,sub_){
 /* ============ CONFIG ============ */
 function vConfig(m,sub_){document.getElementById("hTitle").textContent="Ajustes";sub_.textContent="";
  const n=S.logs.length,ne=Object.values(S.exames).reduce((a,e)=>a+Object.keys(e.hist).length,0);
- m.innerHTML=`<div class="card"><h2>Perfil e meta</h2><div class="grid3"><div><label>Nome</label><input id="p_nome" value="${esc(S.perfil.nome||"")}"></div><div><label>Altura (cm)</label><input id="p_alt" type="number" inputmode="numeric" value="${S.perfil.altura||""}"></div><div><label>Meta de peso (kg)</label><input id="p_meta" type="number" step="0.1" inputmode="decimal" value="${S.perfil.meta||""}"></div></div><div class="row" style="margin-top:8px"><button onclick="S.perfil.nome=document.getElementById('p_nome').value;S.perfil.altura=document.getElementById('p_alt').value;S.perfil.meta=document.getElementById('p_meta').value;save();toast('Salvo')">Salvar</button></div></div>
+ m.innerHTML=`<div class="card"><h2>Perfil e meta</h2><div class="grid3"><div><label>Nome</label><input id="p_nome" value="${esc(S.perfil.nome||"")}"></div><div><label>Altura (cm)</label><input id="p_alt" type="number" inputmode="numeric" value="${S.perfil.altura||""}"></div><div><label>Meta de peso (kg)</label><input id="p_meta" type="number" step="0.1" inputmode="decimal" value="${S.perfil.meta||""}"></div></div>
+ <div class="grid2" style="margin-top:8px"><div><label>Nascimento</label><input id="p_nasc" type="date" value="${S.perfil.nasc||""}"></div><div><label>Sexo</label><select id="p_sexo"><option value="m" ${S.perfil.sexo!=="f"?"selected":""}>Masculino</option><option value="f" ${S.perfil.sexo==="f"?"selected":""}>Feminino</option></select></div></div>
+ <p class="muted" style="margin:6px 0 0">Altura, nascimento e sexo servem só para estimar o metabolismo basal nos dias em que você não informa o total do Garmin.</p>
+ <div class="row" style="margin-top:8px"><button onclick="salvarPerfil()">Salvar</button></div></div>
  <div class="card"><h2>Seus dados</h2><p class="muted">Tudo fica guardado neste iPhone, dentro do app (${n} treinos, ${ne} resultados de exame, ${Object.keys(S.diario).length} dias de registro) e se acumula com o tempo: é o seu histórico. Atualizar o app não apaga nada. O que apaga: remover o ícone da tela inicial ou limpar os dados do Safari. Por isso, faça backup toda semana (no dia da pesagem) e guarde o texto no app Notas ou mande para o seu e-mail.</p>
   <p class="muted">Último backup: <b>${S.ultimoBackup?fmtD(S.ultimoBackup.slice(0,10)):"nunca"}</b></p>
   <div class="row"><button onclick="S.ultimoBackup=new Date().toISOString();save();download('backup-saude-'+hoje()+'.json',JSON.stringify(S),'application/json')">Fazer backup</button><button class="sec" onclick="document.getElementById('imp').click()">Importar arquivo</button><input id="imp" type="file" accept=".json,application/json" class="hidden" onchange="importar(this)"></div>
@@ -497,8 +656,13 @@ function vConfig(m,sub_){document.getElementById("hTitle").textContent="Ajustes"
  <div class="card"><h2>Instalar no iPhone</h2><ol class="muted" style="padding-left:18px;line-height:1.6"><li>Abra esta página no Safari.</li><li>Toque em Compartilhar (quadrado com seta).</li><li>"Adicionar à Tela de Início".</li></ol></div>
  <div class="card"><h2>Zona de perigo</h2><button class="danger" onclick="if(confirm('Apagar TODOS os dados deste aparelho?')){localStorage.removeItem(KEY);S=load();render()}">Apagar tudo</button></div>
  <p class="muted" style="text-align:center">Minha Saúde · v${APP_VERSION}</p>`;}
-function importarTexto(){try{const s=JSON.parse(document.getElementById("imptxt").value);if(!s.exames)throw 0;S=s;save();toast("Backup importado");render();}catch(e){toast("Texto inválido");}}
-function importar(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const s=JSON.parse(r.result);if(!s.exames)throw 0;S=s;save();toast("Backup importado");render();}catch(e){toast("Arquivo inválido");}};r.readAsText(f);}
+function importarTexto(){try{const s=JSON.parse(document.getElementById("imptxt").value);if(!s.exames)throw 0;S=norm(s);save();toast("Backup importado");render();}catch(e){toast("Texto inválido");}}
+function importar(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const s=JSON.parse(r.result);if(!s.exames)throw 0;S=norm(s);save();toast("Backup importado");render();}catch(e){toast("Arquivo inválido");}};r.readAsText(f);}
+
+function salvarPerfil(){const g=id=>document.getElementById(id).value;S.perfil.nome=g("p_nome");S.perfil.altura=g("p_alt");S.perfil.meta=g("p_meta");S.perfil.nasc=g("p_nasc");S.perfil.sexo=g("p_sexo");save();toast("Salvo ✓");}
+const mainEl=document.getElementById("main");
+mainEl.addEventListener("input",e=>{if(view==="hoje"&&e.target.id&&e.target.id.startsWith("d_")){lerCampos();atualizarBalanco();}});
+mainEl.addEventListener("change",e=>{if(view==="hoje"&&e.target.id&&e.target.id.startsWith("d_")){lerCampos();save();}});
 
 render();
 </script>
