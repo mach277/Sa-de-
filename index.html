@@ -199,6 +199,68 @@ const DIETA = [
  {ref:"Lanche / jantar",hora:"18:00",itens:["Omelete recheado (2 ovos + 2 colheres de carne/frango) ou crepioca (1 ovo + 1 colher de polvilho)","Salada crua — à vontade","OU: pão francês com atum/frango, alface e tomate","OU: parecido com o almoço, sem feijão"]},
 ];
 
+
+/* ============ MACROS (estimativas: Tabela TACO e rótulos médios; o plano da nutricionista não traz macros) ============ */
+const GRUPOS_ALIM=["Proteínas","Carboidratos","Laticínios e gorduras","Frutas e vegetais"];
+const ALIM=[
+ // [id, grupo, nome, porção, kcal, P, C, G]
+ ["ovo",0,"Ovo (mexido ou cozido)","1 unidade (50 g)",75,6.5,0.5,5],
+ ["clara",0,"Clara de ovo","1 unidade (33 g)",17,3.6,0.2,0],
+ ["whey",0,"Whey protein","1 dose (30 g)",120,24,3,1.5],
+ ["frango",0,"Frango grelhado (peito)","180 g",297,56,0,6.5],
+ ["carne",0,"Carne bovina magra (patinho/alcatra)","180 g",380,60,0,14],
+ ["peixe",0,"Peixe grelhado (tilápia)","180 g",230,47,0,5],
+ ["atum",0,"Atum em conserva ao natural","2 col. sopa (40 g)",46,10,0,0.5],
+ ["frangodes",0,"Frango desfiado","2 col. sopa (40 g)",66,12,0,1.5],
+ ["omelete",0,"Omelete recheado (2 ovos + 2 col. de frango/carne)","1 porção",235,25,1,14],
+ ["crepioca",0,"Crepioca (1 ovo + 1 col. de polvilho)","1 unidade",135,6.5,15,5],
+ ["cuscuz",1,"Cuscuz de milho","1 cuscuzeira pequena (150 g)",170,3,38,1],
+ ["paoqueijo",1,"Pão de queijo pequeno","1 unidade (20 g)",65,1.3,7.5,3.3],
+ ["paofrances",1,"Pão francês","1 unidade (50 g)",150,4,29,1.6],
+ ["arroz",1,"Arroz branco cozido","2 col. de servir (150 g)",192,3.8,42,0.3],
+ ["macarrao",1,"Macarrão cozido","2 col. de servir (150 g)",210,7,42,1],
+ ["batatadoce",1,"Batata-doce cozida (Vegetal C)","1 pegador (70 g)",60,0.9,14,0.1],
+ ["feijao",1,"Feijão cozido","1 concha (80 g)",61,3.8,11,0.4],
+ ["lentilha",1,"Lentilha cozida","1 concha (80 g)",85,6.5,14,0.3],
+ ["graobico",1,"Grão-de-bico cozido","1 concha (80 g)",105,5.5,18,1.6],
+ ["aveia",1,"Aveia em flocos","2 col. sopa (20 g)",79,2.8,13,1.7],
+ ["iogurte",2,"Iogurte natural desnatado","1 copinho (170 g)",70,6.5,10,0.5],
+ ["cafeleite",2,"Café com leite semidesnatado","1 xícara de chá",70,5,7,2.4],
+ ["leite",2,"Leite semidesnatado","1 xícara (200 ml)",95,6.6,9.6,3.2],
+ ["azeite",2,"Azeite de oliva","1 col. sopa (12 g)",108,0,0,12],
+ ["pastaamendoim",2,"Pasta de amendoim","1 col. sopa (15 g)",88,3.8,2.5,7.6],
+ ["morango",3,"Morango","8 unidades (100 g)",32,0.7,7.7,0.3],
+ ["banana",3,"Banana prata","1 unidade média (80 g)",70,0.9,18,0.1],
+ ["vegb",3,"Vegetal B (cenoura, beterraba)","4 col. sopa (60 g)",25,0.6,5.5,0.1],
+ ["salada",3,"Salada crua (Vegetal A)","à vontade",15,1,3,0.1],
+];
+const ALIMID={};ALIM.forEach(a=>ALIMID[a[0]]=a);
+// refeições do plano: itens principais e opções "OU" ([id, quantidade])
+const PLANO=[
+ {itens:[["ovo",2],["cuscuz",1],["cafeleite",1]],alts:[{n:"2 pães de queijo + 2 ovos + café com leite",it:[["paoqueijo",2],["ovo",2],["cafeleite",1]]}]},
+ {itens:[["iogurte",1],["morango",1],["whey",1]],alts:[]},
+ {itens:[["arroz",1],["feijao",1],["frango",1],["vegb",1],["azeite",1]],alts:[{n:"com macarrão no lugar do arroz",it:[["macarrao",1],["feijao",1],["frango",1],["vegb",1],["azeite",1]]},{n:"com carne no lugar do frango",it:[["arroz",1],["feijao",1],["carne",1],["vegb",1],["azeite",1]]},{n:"com peixe no lugar do frango",it:[["arroz",1],["feijao",1],["peixe",1],["vegb",1],["azeite",1]]}]},
+ {itens:[["omelete",1],["salada",1]],alts:[{n:"crepioca com salada",it:[["crepioca",1],["salada",1]]},{n:"pão francês com atum e salada",it:[["paofrances",1],["atum",1],["salada",1]]}]},
+];
+function macLista(it){return it.reduce((a,[id,q])=>{const f=ALIMID[id];a.k+=f[4]*q;a.p+=f[5]*q;a.c+=f[6]*q;a.f+=f[7]*q;return a;},{k:0,p:0,c:0,f:0});}
+function txtMac(m){return `${nf(m.k)} kcal · P ${nf(m.p)} · C ${nf(m.c)} · G ${nf(m.f)}`;}
+const PLANO_DIA=()=>macLista([].concat(...PLANO.map(r=>r.itens)));
+let refSel=(()=>{const h=new Date().getHours();return h<10?"Desjejum":h<13?"Colação":h<17?"Almoço":"Lanche/jantar";})();
+function macrosDoDia(d){return comidasDoDia(d).reduce((a,c)=>{a.p+=+c.p||0;a.c+=+c.c||0;a.f+=+c.f||0;return a;},{p:0,c:0,f:0});}
+function htmlMacros(d){
+ const m=macrosDoDia(d);if(!m.p&&!m.c&&!m.f)return "";const pl=PLANO_DIA();
+ const k=(l,v,pv)=>`<div class="kpi"><div class="l">${l}</div><div class="v">${nf(v)}<span class="muted" style="font-size:12px"> g</span></div><div class="l">plano ≈ ${nf(pv)}</div></div>`;
+ return `<div class="kpis" style="grid-template-columns:repeat(3,1fr);margin-top:10px">${k("Proteína",m.p,pl.p)}${k("Carbo",m.c,pl.c)}${k("Gordura",m.f,pl.f)}</div><p class="muted" style="margin:6px 0 0">Macros somam só os itens lançados com P/C/G.</p>`;
+}
+function pushComida(n,m,ref){const c=dia(diaSel);c.comidas=c.comidas||[];c.comidas.push({n,k:Math.round(m.k),r:ref,p:+m.p.toFixed(1),c:+m.c.toFixed(1),f:+m.f.toFixed(1)});save();}
+function lancarPlano(i,a){
+ if(view==="hoje")lerCampos();const r=PLANO[i];const alt=a>=0?r.alts[a]:null;
+ pushComida(`${REFS[i]} do plano${alt?" ("+alt.n+")":""}`,macLista(alt?alt.it:r.itens),REFS[i]);
+ toast("Lançado ✓");renderKeep();
+}
+function lancarAlim(id){const f=ALIMID[id];pushComida(`${f[2]} · ${f[3]}`,macLista([[id,1]]),refSel);toast(`+ ${f[2].split(" (")[0]} ✓`);renderKeep();}
+function botoesPlano(){return `<div class="row" style="margin-top:8px">${PLANO.map((r,i)=>`<button class="sec sm" onclick="lancarPlano(${i},-1)">${esc(REFS[i])}<br><span class="muted" style="font-size:11px">${nf(macLista(r.itens).k)} kcal</span></button>`).join("")}</div>`;}
+
 /* ============ ESTADO ============ */
 const KEY="saude.v1";
 let S = load();
@@ -215,7 +277,7 @@ const fmtD=d=>{const [y,m,dd]=d.split("-");return `${dd}/${m}/${y}`;};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 /* ============ VERSÃO / ATUALIZAÇÃO ============ */
-const APP_VERSION="0.5";
+const APP_VERSION="0.6";
 function atualizar(){ // recarrega ignorando o cache do Safari
  toast("Atualizando…");
  const u=location.pathname+"?v="+Date.now()+location.hash;
@@ -291,7 +353,7 @@ function htmlBalanco(d){
 function atualizarBalanco(){const el=document.getElementById("balanco");if(el)el.innerHTML=htmlBalanco(diaSel);}
 function chipsComida(){
  const cont={};
- Object.keys(S.diario).sort().reverse().slice(0,60).forEach(k=>comidasDoDia(k).forEach(c=>{if(!c.n||!+c.k)return;const key=c.n+"|"+c.k;cont[key]=cont[key]||{n:c.n,k:+c.k,r:c.r,c:0};cont[key].c++;}));
+ Object.keys(S.diario).sort().reverse().slice(0,60).forEach(k=>comidasDoDia(k).forEach(c=>{if(!c.n||!+c.k)return;const key=c.n+"|"+c.k;cont[key]=cont[key]||{n:c.n,k:+c.k,r:c.r,p:c.p,c:0,cc:c.c,f:c.f};cont[key].c++;}));
  return Object.values(cont).sort((a,b)=>b.c-a.c).slice(0,8);
 }
 
@@ -335,13 +397,15 @@ function vHoje(m,sub_){
   <details style="margin-top:8px"><summary>＋ Registrar cardio / outra atividade</summary>${formAtiv(false)}</details>
  </div>
  <div class="card"><h2>Calorias consumidas</h2>
-  ${comidas.length?`<div class="list">${comidas.map((c,i)=>`<div class="item"><div><div class="t">${esc(c.n||"Item")}</div><div class="s">${esc(c.r||"")}</div></div><div class="row" style="flex-wrap:nowrap"><b>${nf(c.k)} kcal</b><button class="sec sm" onclick="delComida(${i})">✕</button></div></div>`).join("")}</div><div class="row" style="justify-content:space-between;margin:8px 0 0"><span class="muted">Total</span><b>${nf(totCom)} kcal</b></div>`:`<div class="muted">Nada lançado neste dia.</div>`}
+  ${comidas.length?`<div class="list">${comidas.map((c,i)=>`<div class="item"><div><div class="t">${esc(c.n||"Item")}</div><div class="s">${esc(c.r||"")}${(c.p||c.c||c.f)?" · P "+nf(c.p||0)+" C "+nf(c.c||0)+" G "+nf(c.f||0):""}</div></div><div class="row" style="flex-wrap:nowrap"><b>${nf(c.k)} kcal</b><button class="sec sm" onclick="delComida(${i})">✕</button></div></div>`).join("")}</div><div class="row" style="justify-content:space-between;margin:8px 0 0"><span class="muted">Total</span><b>${nf(totCom)} kcal</b></div>${htmlMacros(diaSel)}`:`<div class="muted">Nada lançado neste dia.</div>`}
+  <details style="margin-top:10px"><summary>＋ Lançar refeição do plano</summary>${botoesPlano()}<div class="row" style="margin-top:8px"><button class="sec sm" onclick="if(view==='hoje')lerCampos();view='dieta';render()">Lista de alimentos e trocas ›</button></div></details>
   ${_chips.length?`<label style="margin-top:10px">Repetir um item usado antes</label><div class="row">${_chips.map((c,i)=>`<button class="sec sm" onclick="addChip(${i})">${esc(c.n)} · ${nf(c.k)}</button>`).join("")}</div>`:""}
   <div class="grid3" style="margin-top:10px;grid-template-columns:1fr 1.3fr .8fr">
    <div><label>Refeição</label><select id="c_ref">${REFS.map(r=>`<option>${r}</option>`).join("")}</select></div>
    <div><label>O quê</label><input id="c_n" placeholder="ex.: almoço"></div>
    <div><label>kcal</label><input id="c_k" type="number" inputmode="numeric"></div>
   </div>
+  <div class="grid3" style="margin-top:6px"><div><label>Prot. (g)</label><input id="c_p" type="number" inputmode="decimal" placeholder="opcional"></div><div><label>Carbo (g)</label><input id="c_c" type="number" inputmode="decimal" placeholder="opcional"></div><div><label>Gord. (g)</label><input id="c_f" type="number" inputmode="decimal" placeholder="opcional"></div></div>
   <div class="row" style="margin-top:8px"><button onclick="addComida()">Adicionar</button><button class="sec" onclick="copiarComidas()">Copiar do dia anterior</button></div>
  </div>
  <div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Dieta</h2><span class="pill ${ad===100?"ok":ad>=50?"lo":ad===null?"":"hi"}">${ad===null?"sem registro":ad+"% do plano"}</span></div>
@@ -387,14 +451,14 @@ function addAtiv(comData){
 function addComida(){
  lerCampos();const g=id=>document.getElementById(id).value;const k=+g("c_k");
  if(!k)return toast("Informe as calorias");
- const c=dia(diaSel);c.comidas=c.comidas||[];c.comidas.push({n:g("c_n").trim(),k,r:g("c_ref")});
+ const c=dia(diaSel);c.comidas=c.comidas||[];c.comidas.push({n:g("c_n").trim(),k,r:g("c_ref"),p:+g("c_p")||0,c:+g("c_c")||0,f:+g("c_f")||0});
  save();toast("Adicionado ✓");renderKeep();
 }
-function addChip(i){lerCampos();const x=_chips[i];const c=dia(diaSel);c.comidas=c.comidas||[];c.comidas.push({n:x.n,k:x.k,r:x.r});save();toast("Adicionado ✓");renderKeep();}
+function addChip(i){lerCampos();const x=_chips[i];const c=dia(diaSel);c.comidas=c.comidas||[];c.comidas.push({n:x.n,k:x.k,r:x.r,p:x.p||0,c:x.cc||0,f:x.f||0});save();toast("Adicionado ✓");renderKeep();}
 function delComida(i){lerCampos();dia(diaSel).comidas.splice(i,1);save();renderKeep();}
 function copiarComidas(){
  const src=comidasDoDia(addDias(diaSel,-1));if(!src.length)return toast("O dia anterior não tem itens");
- lerCampos();const c=dia(diaSel);c.comidas=(c.comidas||[]).concat(src.map(x=>({n:x.n,k:x.k,r:x.r})));
+ lerCampos();const c=dia(diaSel);c.comidas=(c.comidas||[]).concat(src.map(x=>({n:x.n,k:x.k,r:x.r,p:x.p||0,c:x.c||0,f:x.f||0})));
  save();toast("Copiado do dia anterior ✓");renderKeep();
 }
 function lerCampos(){
@@ -557,10 +621,22 @@ function download(name,txt,type){ // mostra o conteúdo com botão Copiar (downl
 
 /* ============ DIETA ============ */
 function vDieta(m,sub_){document.getElementById("hTitle").textContent="Dieta";sub_.textContent="Plano da nutricionista · "+(diaSel===hoje()?"hoje":fmtD(diaSel));
- const d=S.diario[diaSel]||{};const chk=d.ref||{};const ad=adesao(d);
- m.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><div><div class="t" style="font-weight:600">${diaSel===hoje()?"Hoje":diaSemana(diaSel)}</div><div class="muted">Toque no ✓ de cada refeição feita conforme o plano</div></div><span class="pill ${ad===100?"ok":ad>=50?"lo":ad===null?"":"hi"}">${ad===null?"–":ad+"%"}</span></div></div>`+
- DIETA.map((r,i)=>`<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">${esc(r.ref)} ${r.hora?`<span class="muted" style="font-weight:400;font-size:13px">${r.hora}</span>`:""}</h2><button class="chk ${chk[i]?"done":"sec"}" onclick="marcarRef(${i})">${chk[i]?"✓":""}</button></div><ul style="margin:8px 0 0;padding-left:18px;line-height:1.5">${r.itens.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`).join("")+
- `<div class="card"><h2>Água e extras</h2><div class="grid2"><div><label>Água (copos)</label><input type="number" inputmode="numeric" value="${d.agua||""}" onchange="dia(diaSel).agua=this.value;save();toast('Salvo')"></div><div><label>Fora do plano?</label><input value="${esc(d.extra||"")}" placeholder="ex.: 1 brigadeiro" onchange="dia(diaSel).extra=this.value;save();toast('Salvo')"></div></div></div>`;}
+ const d=S.diario[diaSel]||{};const chk=d.ref||{};const ad=adesao(d);const pl=PLANO_DIA();
+ const dest=diaSel===hoje()?"hoje":fmtD(diaSel);
+ m.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><div><div class="t" style="font-weight:600">${diaSel===hoje()?"Hoje":diaSemana(diaSel)}</div><div class="muted">Toque no ✓ de cada refeição feita conforme o plano</div></div><span class="pill ${ad===100?"ok":ad>=50?"lo":ad===null?"":"hi"}">${ad===null?"–":ad+"%"}</span></div></div>
+ <div class="card"><h2>Plano do dia (estimativa)</h2><div class="kpis" style="grid-template-columns:repeat(4,1fr)">
+  <div class="kpi"><div class="l">kcal</div><div class="v" style="font-size:18px">${nf(pl.k)}</div></div><div class="kpi"><div class="l">Prot.</div><div class="v" style="font-size:18px">${nf(pl.p)}</div></div><div class="kpi"><div class="l">Carbo</div><div class="v" style="font-size:18px">${nf(pl.c)}</div></div><div class="kpi"><div class="l">Gord.</div><div class="v" style="font-size:18px">${nf(pl.f)}</div></div></div>
+  <p class="muted" style="margin:8px 0 0">Valores em gramas, soma da opção principal de cada refeição. São <b>estimativas</b> (Tabela TACO e rótulos médios): o plano da Mariana não traz macros. Se ela tiver os valores oficiais, me passe que eu ajusto.</p></div>`+
+ DIETA.map((r,i)=>{const p=PLANO[i];const mm=macLista(p.itens);return `<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">${esc(r.ref)} ${r.hora?`<span class="muted" style="font-weight:400;font-size:13px">${r.hora}</span>`:""}</h2><button class="chk ${chk[i]?"done":"sec"}" onclick="marcarRef(${i})">${chk[i]?"✓":""}</button></div>
+  <ul style="margin:8px 0 0;padding-left:18px;line-height:1.5">${r.itens.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+  <div class="item" style="margin-top:10px"><div><div class="t">Opção principal</div><div class="s">${txtMac(mm)}</div></div><button class="sm" onclick="lancarPlano(${i},-1)">Lançar</button></div>
+  ${p.alts.map((a,j)=>`<div class="item" style="margin-top:6px"><div><div class="t">OU ${esc(a.n)}</div><div class="s">${txtMac(macLista(a.it))}</div></div><button class="sec sm" onclick="lancarPlano(${i},${j})">Lançar</button></div>`).join("")}
+ </div>`;}).join("")+
+ `<div class="card"><h2>Alimentos e trocas</h2><p class="muted" style="margin:0 0 8px">Dentro de cada grupo dá para trocar um alimento por outro: compare as porções e os macros. Toque em <b>+</b> para lançar 1 porção no consumo de ${dest}.</p>
+  <label>Lançar como refeição</label><select onchange="refSel=this.value">${REFS.map(x=>`<option ${x===refSel?"selected":""}>${x}</option>`).join("")}</select>
+  ${GRUPOS_ALIM.map((gn,gi)=>`<details style="margin-top:8px" ${gi===0?"open":""}><summary>${gn}</summary><div class="list">${ALIM.filter(a=>a[1]===gi).map(a=>`<div class="item"><div><div class="t">${esc(a[2])}</div><div class="s">${esc(a[3])} · ${nf(a[4])} kcal · P ${a[5]} · C ${a[6]} · G ${a[7]}</div></div><button class="sm" onclick="lancarAlim('${a[0]}')">+</button></div>`).join("")}</div></details>`).join("")}
+ </div>
+ <div class="card"><h2>Água e extras</h2><div class="grid2"><div><label>Água (copos)</label><input type="number" inputmode="numeric" value="${d.agua||""}" onchange="dia(diaSel).agua=this.value;save();toast('Salvo')"></div><div><label>Fora do plano?</label><input value="${esc(d.extra||"")}" placeholder="ex.: 1 brigadeiro" onchange="dia(diaSel).extra=this.value;save();toast('Salvo')"></div></div></div>`;}
 function marcarRef(i){if(view==="hoje")lerCampos();const d=dia(diaSel);d.ref=d.ref||{};d.ref[i]=!d.ref[i];save();renderKeep();}
 
 /* ============ EVOLUÇÃO ============ */
