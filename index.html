@@ -749,7 +749,7 @@ function compOrd(){return S.composicao.map((x,i)=>Object.assign({i},x)).sort((a,
 function gordKg(x){return (+x.peso&&+x.gord)?+x.peso*+x.gord/100:null;}
 function htmlComposicao(){
  const c=compOrd();const ult=c[c.length-1],pri=c[0];
- const dl=(a,b,inv)=>{if(a==null||b==null)return "–";const d=+(b-a).toFixed(1);const bom=inv?d>0:d<0;return `<span class="${d===0?"":bom?"good":"badc"}">${d>0?"+":""}${d}</span>`;};
+ const dl=(a,b,inv)=>{if(a==null||b==null)return "–";const d=+(b-a).toFixed(1);const bom=inv?d>0:d<0;return `<span class="${d===0?"":bom?"good":"badc"}">${d>0?"+":""}${fmt1(d)}</span>`;};
  let corpo="";
  if(c.length){
   const gk=gordKg(ult),gk0=gordKg(pri),mk=(+ult.peso&&gk!==null)?ult.peso-gk:null,mk0=(+pri.peso&&gk0!==null)?pri.peso-gk0:null;
