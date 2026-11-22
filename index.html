@@ -295,7 +295,7 @@ function botoesPlano(){return `<div class="row" style="margin-top:8px">${PLANO.m
 /* ============ ESTADO ============ */
 const KEY="saude.v1";
 let S = load();
-function norm(x){x.exames=x.exames||{};x.diario=x.diario||{};x.logs=x.logs||[];x.cargas=x.cargas||{};x.perfil=x.perfil||{};x.atividades=x.atividades||[];x.meusAlim=x.meusAlim||[];return x;}
+function norm(x){x.exames=x.exames||{};x.diario=x.diario||{};x.logs=x.logs||[];x.cargas=x.cargas||{};x.perfil=x.perfil||{};x.atividades=x.atividades||[];x.meusAlim=x.meusAlim||[];x.composicao=x.composicao||[];return x;}
 function load(){
  try{const s=JSON.parse(localStorage.getItem(KEY)); if(s) return norm(s);}catch(e){}
  return norm({exames:JSON.parse(JSON.stringify(SEED_EXAMES)),diario:{},logs:[],cargas:{},perfil:{nome:"",nasc:"",altura:""}});
@@ -308,7 +308,7 @@ const fmtD=d=>{const [y,m,dd]=d.split("-");return `${dd}/${m}/${y}`;};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 /* ============ VERSÃO / ATUALIZAÇÃO ============ */
-const APP_VERSION="0.9";
+const APP_VERSION="1.0";
 function atualizar(){ // recarrega ignorando o cache do Safari
  toast("Atualizando…");
  const u=location.pathname+"?v="+Date.now()+location.hash;
@@ -424,7 +424,8 @@ let _chips=[];
 const nf=n=>Math.round(n).toLocaleString("pt-BR");
 function idade(d){const n=S.perfil.nasc;if(!n)return null;const a=new Date(n+"T12:00:00"),b=new Date(d+"T12:00:00");let i=b.getFullYear()-a.getFullYear();if(b.getMonth()<a.getMonth()||(b.getMonth()===a.getMonth()&&b.getDate()<a.getDate()))i--;return i;}
 function pesoEm(d){const todos=Object.keys(S.diario).filter(k=>+S.diario[k].peso).sort();if(!todos.length)return null;const ate=todos.filter(k=>k<=d);return +S.diario[ate.length?ate[ate.length-1]:todos[0]].peso;}
-function tmb(d){const kg=pesoEm(d),cm=+S.perfil.altura,id=idade(d);if(!kg||!cm||id===null)return null;return Math.round(10*kg+6.25*cm-5*id+(S.perfil.sexo==="f"?-161:5));}
+function tmbMedida(d){const c=S.composicao.filter(x=>x.data<=d&&+x.tmb).sort((a,b)=>a.data.localeCompare(b.data));return c.length?+c[c.length-1].tmb:null;}
+function tmb(d){const med=tmbMedida(d);if(med)return med;const kg=pesoEm(d),cm=+S.perfil.altura,id=idade(d);if(!kg||!cm||id===null)return null;return Math.round(10*kg+6.25*cm-5*id+(S.perfil.sexo==="f"?-161:5));}
 function atividadesDoDia(d){
  const a=[];
  S.logs.forEach((l,i)=>{if(l.data===d)a.push({k:"log",i,tipo:"Musculação",nome:l.nome,dur:+l.dur||0,dist:0,kcal:+l.kcal||0,fc:+l.fc||0});});
@@ -437,7 +438,7 @@ function gastoDia(d){ // gasto real = total do Garmin; sem ele, estima pelo meta
  const x=S.diario[d]||{},tot=+x.kcal||0,at=+x.kcala||0;
  const tr=atividadesDoDia(d).reduce((a,y)=>a+y.kcal,0),t=tmb(d);
  if(tot)return {v:tot,fonte:"total do Garmin",real:true};
- if(at&&t)return {v:t+at,fonte:"basal estimado + ativas do Garmin",real:false};
+ if(at&&t)return {v:t+at,fonte:"basal (bioimpedância/fórmula) + ativas do Garmin",real:false};
  if(tr&&t)return {v:Math.round(t*1.2+tr),fonte:"basal × 1,2 + treinos (estimativa)",real:false};
  return null;
 }
@@ -742,6 +743,41 @@ function vDieta(m,sub_){document.getElementById("hTitle").textContent="Dieta";su
  <div class="card"><h2>Água e extras</h2><div class="grid2"><div><label>Água (copos)</label><input type="number" inputmode="numeric" value="${d.agua||""}" onchange="dia(diaSel).agua=this.value;save();toast('Salvo')"></div><div><label>Fora do plano?</label><input value="${esc(d.extra||"")}" placeholder="ex.: 1 brigadeiro" onchange="dia(diaSel).extra=this.value;save();toast('Salvo')"></div></div></div>`;}
 function marcarRef(i){if(view==="hoje")lerCampos();const d=dia(diaSel);d.ref=d.ref||{};d.ref[i]=!d.ref[i];save();renderKeep();}
 
+
+/* ============ COMPOSIÇÃO CORPORAL (bioimpedância) ============ */
+function compOrd(){return S.composicao.map((x,i)=>Object.assign({i},x)).sort((a,b)=>a.data.localeCompare(b.data));}
+function gordKg(x){return (+x.peso&&+x.gord)?+x.peso*+x.gord/100:null;}
+function htmlComposicao(){
+ const c=compOrd();const ult=c[c.length-1],pri=c[0];
+ const dl=(a,b,inv)=>{if(a==null||b==null)return "–";const d=+(b-a).toFixed(1);const bom=inv?d>0:d<0;return `<span class="${d===0?"":bom?"good":"badc"}">${d>0?"+":""}${d}</span>`;};
+ let corpo="";
+ if(c.length){
+  const gk=gordKg(ult),gk0=gordKg(pri),mk=(+ult.peso&&gk!==null)?ult.peso-gk:null,mk0=(+pri.peso&&gk0!==null)?pri.peso-gk0:null;
+  corpo+=`<div class="kpis"><div class="kpi"><div class="l">% gordura</div><div class="v">${ult.gord?fmt1(ult.gord)+"%":"–"}</div><div class="l">${c.length>1?"desde o início: "+dl(+pri.gord||null,+ult.gord||null):""}</div></div>
+  <div class="kpi"><div class="l">Massa gorda</div><div class="v">${gk!==null?fmt1(gk)+" kg":"–"}</div><div class="l">${c.length>1?"desde o início: "+dl(gk0,gk):""}</div></div>
+  <div class="kpi"><div class="l">Massa sem gordura</div><div class="v">${mk!==null?fmt1(mk)+" kg":"–"}</div><div class="l">${c.length>1?"desde o início: "+dl(mk0,mk,true):""}</div></div>
+  <div class="kpi"><div class="l">Metabolismo basal</div><div class="v">${ult.tmb?nf(ult.tmb)+" kcal":"–"}</div><div class="l">${ult.im?"idade metabólica "+ult.im:"medido na bioimpedância"}</div></div></div>`;
+  if(c.length>1&&gk!==null&&mk!==null&&gk0!==null&&mk0!==null){const dp=ult.peso-pri.peso,dg=gk-gk0;if(dp<0)corpo+=`<p class="muted" style="margin:8px 0 0">Do peso perdido (${fmt1(-dp)} kg), ${fmt1(Math.max(0,Math.min(100,(-dg/-dp)*100)))}% foi gordura. O ideal é a maior parte vir da gordura, não do músculo.</p>`;}
+  const pg=c.filter(x=>+x.gord).map(x=>[x.data,+x.gord]);
+  if(pg.length>1)corpo+=`<h3>% de gordura</h3>${chart(pg)}`;
+  corpo+=`<div class="scroll" style="margin-top:8px"><table><tr><th>Data</th><th>Peso</th><th>%G</th><th>%Mag.</th><th>Água</th><th>TMB</th><th></th></tr>${c.slice().reverse().map(x=>`<tr><td>${fmtD(x.data).slice(0,5)}/${x.data.slice(2,4)}</td><td>${x.peso||"–"}</td><td>${x.gord||"–"}</td><td>${x.magra||"–"}</td><td>${x.agua||"–"}</td><td>${x.tmb||"–"}</td><td><button class="sec sm" onclick="apagarComp(${x.i})">✕</button></td></tr>`).join("")}</table></div>`;
+ }else corpo=`<p class="muted" style="margin:0 0 6px">Registre aqui as medidas da bioimpedância (consulta ou balança). O app mostra a evolução da gordura e usa o seu metabolismo basal medido no balanço de calorias.</p>`;
+ return `<div class="card"><h2>Composição corporal</h2>${corpo}
+  <details style="margin-top:8px"><summary>＋ Nova medida</summary><div class="grid3" style="margin-top:6px">
+   <div><label>Data</label><input id="cp_data" type="date" value="${hoje()}" max="${hoje()}"></div><div><label>Peso (kg)</label><input id="cp_peso" type="number" step="0.1" inputmode="decimal" value="${pesoEm(hoje())||""}"></div><div><label>% gordura</label><input id="cp_gord" type="number" step="0.1" inputmode="decimal"></div>
+   <div><label>% massa magra</label><input id="cp_magra" type="number" step="0.1" inputmode="decimal"></div><div><label>% água</label><input id="cp_agua" type="number" step="0.1" inputmode="decimal"></div><div><label>TMB (kcal)</label><input id="cp_tmb" type="number" inputmode="numeric"></div>
+   <div><label>Idade metabólica</label><input id="cp_im" type="number" inputmode="numeric"></div></div>
+   <p class="muted" style="margin:6px 0 0">Preencha só o que a avaliação trouxe. Peso e % de gordura são os essenciais.</p>
+   <div class="row" style="margin-top:8px"><button onclick="addComp()">Salvar medida</button></div></details></div>`;
+}
+function addComp(){
+ const g=id=>document.getElementById(id).value;const peso=+g("cp_peso"),gord=+g("cp_gord"),tmbv=+g("cp_tmb");
+ if(!g("cp_data")||(!peso&&!gord&&!tmbv))return toast("Informe a data e ao menos peso, % de gordura ou TMB");
+ S.composicao.push({data:g("cp_data"),peso:peso||0,gord:gord||0,magra:+g("cp_magra")||0,agua:+g("cp_agua")||0,tmb:tmbv||0,im:+g("cp_im")||0});
+ save();toast("Medida salva ✓");renderKeep();
+}
+function apagarComp(i){if(!confirm("Apagar esta medida?"))return;S.composicao.splice(i,1);save();renderKeep();}
+
 /* ============ EVOLUÇÃO ============ */
 function semanas(){
  const ks=new Set();Object.keys(S.diario).forEach(k=>ks.add(segunda(k)));S.logs.forEach(l=>ks.add(segunda(l.data)));S.atividades.forEach(a=>ks.add(segunda(a.data)));
@@ -790,7 +826,7 @@ function htmlBalancoSemanal(ws,lab){
 function vEvolucao(m,sub_){
  document.getElementById("hTitle").textContent="Evolução";sub_.textContent="Semana a semana (segunda a domingo)";
  const ws=semanas();
- if(!ws.length){m.innerHTML=`<div class="card"><h2>Ainda sem dados</h2><p class="muted">Registre na aba Hoje o peso (uma vez por semana), as calorias do Garmin e o check da dieta. A evolução aparece aqui semana a semana.</p></div>`;return;}
+ if(!ws.length){m.innerHTML=`<div class="card"><h2>Ainda sem dados</h2><p class="muted">Registre na aba Hoje o peso (uma vez por semana), as calorias do Garmin e o check da dieta. A evolução aparece aqui semana a semana.</p></div>`+htmlComposicao();return;}
  const comPeso=ws.filter(w=>w.peso);
  const ini=comPeso[0], atu=comPeso[comPeso.length-1];
  const meta=+S.perfil.meta||null;
@@ -809,6 +845,7 @@ function vEvolucao(m,sub_){
   <div class="kpi"><div class="l">${meta?"Meta "+meta+" kg":"Meta de peso"}</div><div class="v">${meta?(falta>0?"faltam "+falta+" kg":"atingida 🎉"):`<button class="sm sec" onclick="view='config';render()">Definir</button>`}</div>${prev?`<div class="l">≈ ${prev} semanas no ritmo atual</div>`:""}</div>
  </div></div>
  ${comPeso.length>1?`<div class="card"><h2>Peso por semana</h2>${chart(comPeso.map(w=>[w.seg,w.peso]))}${meta?`<p class="muted" style="margin:4px 0 0">Meta: ${meta} kg</p>`:""}</div>`:""}
+ ${htmlComposicao()}
  ${htmlBalancoSemanal(ws,lab)}
  ${ult8.some(w=>w.kcala)?`<div class="card"><h2>Calorias ativas por semana</h2>${barras(ult8.map(w=>w.kcala),ult8.map(lab),"#f59e0b")}<p class="muted" style="margin:4px 0 0">Soma das calorias ativas do Garmin em cada semana.</p></div>`:""}
  ${ult8.some(w=>w.adesao!==null)?`<div class="card"><h2>Adesão à dieta</h2>${barras(ult8.map(w=>w.adesao||0),ult8.map(lab),"#34d399")}<p class="muted" style="margin:4px 0 0">% das refeições feitas conforme o plano (média dos dias registrados).</p></div>`:""}
