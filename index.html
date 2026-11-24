@@ -157,55 +157,61 @@ const GRUPOS_EXAMES = {
 };
 
 // Treinos: ex = [descrição, categoria Garmin, nome Garmin, alvo reps|null, segundos|null]
-const TREINOS = [
- {id:"A",nome:"A — Peito / Ombros",dia:"Segunda",desc:"4 séries por exercício. 20-15-10-FALHA ou 12-10-8-FALHA. Descanso 60s.",blocos:[
-  {x:4,r:60,ex:[["Supino inclinado máquina","BENCH_PRESS","INCLINE_BARBELL_BENCH_PRESS",15]]},
-  {x:4,r:60,ex:[["Supino reto máquina","BENCH_PRESS","BARBELL_BENCH_PRESS",15]]},
-  {x:4,r:60,ex:[["Voador / Peck deck","FLYE","DUMBBELL_FLYE",15]]},
-  {x:4,r:60,ex:[["Crucifixo deitado halteres","FLYE","DUMBBELL_FLYE",10]]},
-  {x:4,r:60,ex:[["Pullover halteres","PULL_UP","EZ_BAR_PULLOVER",15]]},
-  {x:4,r:60,ex:[["Crucifixo cross polia alta","FLYE","CABLE_CROSSOVER",15]]},
-  {x:4,r:60,ex:[["Desenvolvimento Arnold","SHOULDER_PRESS","ARNOLD_PRESS",10]]},
-  {x:4,r:60,ex:[["Elevação lateral no cross","LATERAL_RAISE","ONE_ARM_CABLE_LATERAL_RAISE",10]]},
-  {x:4,r:60,ex:[["Elevação frontal no cross","LATERAL_RAISE","CABLE_FRONT_RAISE",10]]}]},
- {id:"B",nome:"B — Pernas / Panturrilha",dia:"Terça",desc:"4 séries. Panturrilha 4x até a falha. Descanso 60s.",blocos:[
-  {x:4,r:60,ex:[["Cadeira extensora","SQUAT","MACHINE_LEG_EXTENSION",15]]},
-  {x:4,r:60,ex:[["Cadeira flexora","LEG_CURL","MACHINE_LEG_CURL_SEATED",10]]},
-  {x:4,r:60,ex:[["Mesa flexora / flexor em pé","LEG_CURL","LYING_LEG_CURL",15]]},
-  {x:4,r:60,ex:[["Leg press 45 ou 180","SQUAT","LEG_PRESS",15]]},
-  {x:4,r:60,ex:[["Agachamento (livre escolha)","SQUAT","BARBELL_BACK_SQUAT",10]]},
-  {x:4,r:60,ex:[["Cadeira adutora","HIP_STABILITY","MACHINE_HIP_ADDUCTION",10]]},
-  {x:4,r:60,ex:[["Cadeira abdutora","HIP_STABILITY","MACHINE_HIP_ABDUCTION",10]]},
-  {x:4,r:60,ex:[["Panturrilha em pé / leg","CALF_RAISE","MACHINE_CALF_PRESS",20]]},
-  {x:4,r:60,ex:[["Panturrilha sentado","CALF_RAISE","SEATED_CALF_RAISE",20]]}]},
- {id:"C",nome:"C — Costas / Ombro posterior",dia:"Quarta",desc:"4 séries. Trapézio 4x até a falha. Descanso 60s.",blocos:[
-  {x:4,r:60,ex:[["Puxada frente (pulley)","PULL_UP","LAT_PULLDOWN",10]]},
-  {x:4,r:60,ex:[["Remada sentada triângulo","ROW","V_GRIP_CABLE_ROW",10]]},
-  {x:4,r:60,ex:[["Remada cavalinho","ROW","T_BAR_ROW",10]]},
-  {x:4,r:60,ex:[["Pulldown braços estendidos","PULL_UP","STRAIGHT_ARM_PULLDOWN",15]]},
-  {x:4,r:60,ex:[["Remada unilateral serrote","ROW","DUMBBELL_ROW",15]]},
-  {x:4,r:60,ex:[["Remada máquina articulada","ROW","SEATED_CABLE_ROW",15]]},
-  {x:4,r:60,ex:[["Crucifixo inverso máquina/cross","FLYE","SINGLE_ARM_STANDING_CABLE_REVERSE_FLYE",15]]},
-  {x:4,r:60,ex:[["Crucifixo inverso halteres","LATERAL_RAISE","BENT_OVER_LATERAL_RAISE",10]]},
-  {x:4,r:60,ex:[["Encolhimento trapézio","SHRUG","DUMBBELL_SHRUG",15]]}]},
- {id:"D",nome:"D — Bíceps / Tríceps",dia:"Quinta",desc:"4 séries. Pode conjugar bíceps/tríceps. Descanso 45s.",blocos:[
-  {x:4,r:45,ex:[["Rosca Scott máquina","CURL","EZ_BAR_PREACHER_CURL",15]]},
-  {x:4,r:45,ex:[["Tríceps pulley supinado","TRICEPS_EXTENSION","REVERSE_GRIP_TRICEPS_PRESSDOWN",15]]},
-  {x:4,r:45,ex:[["Rosca direta barra","CURL","BARBELL_BICEPS_CURL",10]]},
-  {x:4,r:45,ex:[["Tríceps pulley pronado","TRICEPS_EXTENSION","TRICEPS_PRESSDOWN",10]]},
-  {x:4,r:45,ex:[["Rosca alternada halteres","CURL","ALTERNATING_DUMBBELL_BICEPS_CURL",10]]},
-  {x:4,r:45,ex:[["Tríceps testa halteres","TRICEPS_EXTENSION","DUMBBELL_LYING_TRICEPS_EXTENSION",10]]},
-  {x:4,r:45,ex:[["Rosca martelo","CURL","DUMBBELL_HAMMER_CURL",15]]},
-  {x:4,r:45,ex:[["Tríceps francês cross","TRICEPS_EXTENSION","CABLE_OVERHEAD_TRICEPS_EXTENSION",15]]},
-  {x:4,r:45,ex:[["Rosca concentrada","CURL","ONE_ARM_CONCENTRATION_CURL",10]]}]},
- {id:"E",nome:"E — Calistenia",dia:"Sexta",desc:"Corpo livre: barra, paralelas, flexão, burpee e core. Execução limpa.",blocos:[
+const PROGS={
+ 1:[
+  {id:"A",nome:"A \u2014 Peito / Ombros",dia:"Segunda",desc:"Bloco 1 (sem 1-4): 3 séries de 12 reps (isolados 15), em bisets. Faça os 2 exercícios seguidos, descanso 75s ao fim do par. Termine cada série com 2-3 reps na reserva; sem 4 = leve (2 séries).",blocos:[{x:3,r:75,ex:[["Supino inclinado máquina", "BENCH_PRESS", "INCLINE_BARBELL_BENCH_PRESS", 12],["Voador / peck deck", "FLYE", "DUMBBELL_FLYE", 15]]},{x:3,r:75,ex:[["Supino reto máquina", "BENCH_PRESS", "BARBELL_BENCH_PRESS", 12],["Crucifixo cross polia alta", "FLYE", "CABLE_CROSSOVER", 15]]},{x:3,r:75,ex:[["Desenvolvimento Arnold", "SHOULDER_PRESS", "ARNOLD_PRESS", 12],["Elevação lateral no cross", "LATERAL_RAISE", "ONE_ARM_CABLE_LATERAL_RAISE", 15]]},{x:3,r:75,ex:[["Pullover halteres", "PULL_UP", "EZ_BAR_PULLOVER", 12],["Elevação frontal no cross", "LATERAL_RAISE", "CABLE_FRONT_RAISE", 15]]}]},
+  {id:"B",nome:"B \u2014 Pernas / Panturrilha",dia:"Terça",desc:"Bloco 1 (sem 1-4): 3 séries de 12 reps (isolados 15), em bisets. Faça os 2 exercícios seguidos, descanso 75s ao fim do par. Termine cada série com 2-3 reps na reserva; sem 4 = leve (2 séries).",blocos:[{x:3,r:75,ex:[["Agachamento livre", "SQUAT", "BARBELL_BACK_SQUAT", 12],["Mesa flexora", "LEG_CURL", "LYING_LEG_CURL", 12]]},{x:3,r:75,ex:[["Leg press", "SQUAT", "LEG_PRESS", 12],["Cadeira extensora", "SQUAT", "MACHINE_LEG_EXTENSION", 15]]},{x:3,r:75,ex:[["Cadeira adutora", "HIP_STABILITY", "MACHINE_HIP_ADDUCTION", 15],["Cadeira abdutora", "HIP_STABILITY", "MACHINE_HIP_ABDUCTION", 15]]},{x:3,r:75,ex:[["Panturrilha em pé", "CALF_RAISE", "MACHINE_CALF_PRESS", 15],["Panturrilha sentado", "CALF_RAISE", "SEATED_CALF_RAISE", 15]]}]},
+  {id:"C",nome:"C \u2014 Costas / Ombro posterior",dia:"Quarta",desc:"Bloco 1 (sem 1-4): 3 séries de 12 reps (isolados 15), em bisets. Faça os 2 exercícios seguidos, descanso 75s ao fim do par. Termine cada série com 2-3 reps na reserva; sem 4 = leve (2 séries).",blocos:[{x:3,r:75,ex:[["Puxada frente", "PULL_UP", "LAT_PULLDOWN", 12],["Remada sentada triângulo", "ROW", "V_GRIP_CABLE_ROW", 12]]},{x:3,r:75,ex:[["Remada cavalinho", "ROW", "T_BAR_ROW", 12],["Pulldown braços estendidos", "PULL_UP", "STRAIGHT_ARM_PULLDOWN", 15]]},{x:3,r:75,ex:[["Remada unilateral serrote", "ROW", "DUMBBELL_ROW", 12],["Crucifixo inverso máquina/cross", "FLYE", "SINGLE_ARM_STANDING_CABLE_REVERSE_FLYE", 15]]},{x:3,r:75,ex:[["Encolhimento trapézio", "SHRUG", "DUMBBELL_SHRUG", 12],["Crucifixo inverso halteres", "LATERAL_RAISE", "BENT_OVER_LATERAL_RAISE", 15]]}]},
+  {id:"D",nome:"D \u2014 B\u00edceps / Tr\u00edceps",dia:"Quinta",desc:"Bloco 1 (sem 1-4): 3 séries de 12 reps (isolados 15), em bisets. Faça os 2 exercícios seguidos, descanso 75s ao fim do par. Termine cada série com 2-3 reps na reserva; sem 4 = leve (2 séries).",blocos:[{x:3,r:75,ex:[["Rosca Scott máquina", "CURL", "EZ_BAR_PREACHER_CURL", 12],["Tríceps pulley supinado", "TRICEPS_EXTENSION", "REVERSE_GRIP_TRICEPS_PRESSDOWN", 12]]},{x:3,r:75,ex:[["Rosca direta barra", "CURL", "BARBELL_BICEPS_CURL", 12],["Tríceps pulley pronado", "TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN", 12]]},{x:3,r:75,ex:[["Rosca alternada halteres", "CURL", "ALTERNATING_DUMBBELL_BICEPS_CURL", 12],["Tríceps testa halteres", "TRICEPS_EXTENSION", "DUMBBELL_LYING_TRICEPS_EXTENSION", 12]]},{x:3,r:75,ex:[["Rosca martelo", "CURL", "DUMBBELL_HAMMER_CURL", 15],["Tríceps francês cross", "TRICEPS_EXTENSION", "CABLE_OVERHEAD_TRICEPS_EXTENSION", 15]]}]},
+  {id:"E",nome:"E — Calistenia",dia:"Sexta",desc:"Corpo livre: barra, paralelas, flexão, burpee e core. Execução limpa.",blocos:[
   {x:2,r:30,ex:[["Polichinelos 40s","CARDIO","JUMPING_JACKS",null,40],["Agachamento livre leve","SQUAT","AIR_SQUAT",15]]},
   {x:4,r:90,ex:[["Barra fixa pronada (6-8)","PULL_UP","PULL_UP",8],["Paralelas / dips (8-10)","TRICEPS_EXTENSION","BODY_WEIGHT_DIP",10]]},
   {x:4,r:90,ex:[["Flexão de braços (12-15)","PUSH_UP","PUSH_UP",15],["Barra supinada / chin-up (6-8)","PULL_UP","CHIN_UP",8]]},
   {x:3,r:75,ex:[["Agachamento livre","SQUAT","AIR_SQUAT",20],["Afundo alternado (12/perna)","LUNGE","LUNGE",24],["Burpee","TOTAL_BODY","BURPEE",10]]},
   {x:3,r:60,ex:[["Elevação de pernas na barra","LEG_RAISE","HANGING_LEG_RAISE",10],["Abdominal bicicleta","CRUNCH","BICYCLE_CRUNCH",20],["Prancha 45s","PLANK","PLANK",null,45],["Escalador 30s","PLANK","MOUNTAIN_CLIMBER",null,30]]},
   {x:2,r:60,ex:[["Flexão diamante (até a falha)","PUSH_UP","DIAMOND_PUSH_UP",12],["Russian twist","CORE","RUSSIAN_TWIST",20]]}]},
-];
+ ],
+ 2:[
+  {id:"A",nome:"A \u2014 Peito / Ombros",dia:"Segunda",desc:"Bloco 2 (sem 5-8): 3 séries de 10 reps (isolados 12), em bisets, exercícios novos. Descanso 90s ao fim do par. Carga maior que no bloco 1; sem 8 = leve (2 séries).",blocos:[{x:3,r:90,ex:[["Supino inclinado halteres", "BENCH_PRESS", "INCLINE_DUMBBELL_BENCH_PRESS", 10],["Crucifixo inclinado halteres", "FLYE", "INCLINE_DUMBBELL_FLYE", 12]]},{x:3,r:90,ex:[["Supino reto halteres", "BENCH_PRESS", "DUMBBELL_BENCH_PRESS", 10],["Crucifixo no cross", "FLYE", "CABLE_CROSSOVER", 12]]},{x:3,r:90,ex:[["Desenvolvimento halteres sentado", "SHOULDER_PRESS", "SEATED_DUMBBELL_SHOULDER_PRESS", 10],["Elevação lateral halteres", "LATERAL_RAISE", "DUMBBELL_LATERAL_RAISE", 12]]},{x:3,r:90,ex:[["Pullover na polia", "PULL_UP", "STANDING_CABLE_PULLOVER", 10],["Elevação frontal no cross", "LATERAL_RAISE", "CABLE_FRONT_RAISE", 12]]}]},
+  {id:"B",nome:"B \u2014 Pernas / Panturrilha",dia:"Terça",desc:"Bloco 2 (sem 5-8): 3 séries de 10 reps (isolados 12), em bisets, exercícios novos. Descanso 90s ao fim do par. Carga maior que no bloco 1; sem 8 = leve (2 séries).",blocos:[{x:3,r:90,ex:[["Agachamento goblet", "SQUAT", "GOBLET_SQUAT", 10],["Stiff com halteres", "DEADLIFT", "DUMBBELL_STRAIGHT_LEG_DEADLIFT", 10]]},{x:3,r:90,ex:[["Afundo com halteres", "LUNGE", "DUMBBELL_LUNGE", 10],["Elevação pélvica", "HIP_RAISE", "BARBELL_HIP_THRUST_WITH_BENCH", 10]]},{x:3,r:90,ex:[["Cadeira extensora", "SQUAT", "MACHINE_LEG_EXTENSION", 12],["Mesa flexora", "LEG_CURL", "LYING_LEG_CURL", 10]]},{x:3,r:90,ex:[["Panturrilha unilateral em pé", "CALF_RAISE", "SINGLE_LEG_STANDING_CALF_RAISE", 12],["Panturrilha sentado", "CALF_RAISE", "SEATED_CALF_RAISE", 12]]}]},
+  {id:"C",nome:"C \u2014 Costas / Ombro posterior",dia:"Quarta",desc:"Bloco 2 (sem 5-8): 3 séries de 10 reps (isolados 12), em bisets, exercícios novos. Descanso 90s ao fim do par. Carga maior que no bloco 1; sem 8 = leve (2 séries).",blocos:[{x:3,r:90,ex:[["Puxada supinada", "PULL_UP", "REVERSE_GRIP_PULLDOWN", 10],["Remada curvada barra", "ROW", "BENT_OVER_ROW_WITH_BARBELL", 10]]},{x:3,r:90,ex:[["Remada unilateral no cabo", "ROW", "SINGLE_ARM_CABLE_ROW", 10],["Face pull", "ROW", "FACE_PULL", 12]]},{x:3,r:90,ex:[["Remada sentada pegada aberta", "ROW", "WIDE_GRIP_SEATED_CABLE_ROW", 10],["Crucifixo inverso halteres", "LATERAL_RAISE", "BENT_OVER_LATERAL_RAISE", 12]]},{x:3,r:90,ex:[["Encolhimento com barra", "SHRUG", "BARBELL_SHRUG", 10],["Pulldown braços estendidos", "PULL_UP", "STRAIGHT_ARM_PULLDOWN", 12]]}]},
+  {id:"D",nome:"D \u2014 B\u00edceps / Tr\u00edceps",dia:"Quinta",desc:"Bloco 2 (sem 5-8): 3 séries de 10 reps (isolados 12), em bisets, exercícios novos. Descanso 90s ao fim do par. Carga maior que no bloco 1; sem 8 = leve (2 séries).",blocos:[{x:3,r:90,ex:[["Rosca direta barra EZ", "CURL", "STANDING_EZ_BAR_BICEPS_CURL", 10],["Tríceps testa barra EZ", "TRICEPS_EXTENSION", "LYING_EZ_BAR_TRICEPS_EXTENSION", 10]]},{x:3,r:90,ex:[["Rosca inclinada halteres", "CURL", "INCLINE_DUMBBELL_BICEPS_CURL", 10],["Tríceps francês halter", "TRICEPS_EXTENSION", "OVERHEAD_DUMBBELL_TRICEPS_EXTENSION", 10]]},{x:3,r:90,ex:[["Rosca martelo no cross", "CURL", "CABLE_HAMMER_CURL", 12],["Tríceps pulley pronado", "TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN", 12]]},{x:3,r:90,ex:[["Rosca concentrada", "CURL", "ONE_ARM_CONCENTRATION_CURL", 10],["Mergulho no banco", "TRICEPS_EXTENSION", "BENCH_DIP", 12]]}]},
+  {id:"E",nome:"E — Calistenia",dia:"Sexta",desc:"Corpo livre: barra, paralelas, flexão, burpee e core. Execução limpa.",blocos:[
+  {x:2,r:30,ex:[["Polichinelos 40s","CARDIO","JUMPING_JACKS",null,40],["Agachamento livre leve","SQUAT","AIR_SQUAT",15]]},
+  {x:4,r:90,ex:[["Barra fixa pronada (6-8)","PULL_UP","PULL_UP",8],["Paralelas / dips (8-10)","TRICEPS_EXTENSION","BODY_WEIGHT_DIP",10]]},
+  {x:4,r:90,ex:[["Flexão de braços (12-15)","PUSH_UP","PUSH_UP",15],["Barra supinada / chin-up (6-8)","PULL_UP","CHIN_UP",8]]},
+  {x:3,r:75,ex:[["Agachamento livre","SQUAT","AIR_SQUAT",20],["Afundo alternado (12/perna)","LUNGE","LUNGE",24],["Burpee","TOTAL_BODY","BURPEE",10]]},
+  {x:3,r:60,ex:[["Elevação de pernas na barra","LEG_RAISE","HANGING_LEG_RAISE",10],["Abdominal bicicleta","CRUNCH","BICYCLE_CRUNCH",20],["Prancha 45s","PLANK","PLANK",null,45],["Escalador 30s","PLANK","MOUNTAIN_CLIMBER",null,30]]},
+  {x:2,r:60,ex:[["Flexão diamante (até a falha)","PUSH_UP","DIAMOND_PUSH_UP",12],["Russian twist","CORE","RUSSIAN_TWIST",20]]}]},
+ ],
+};
+
+let TREINOS=PROGS[1];
+const SEMANAS_CICLO=[
+ {b:1,t:"Base: adaptação",f:"Cargas moderadas, 3 reps na reserva. Anote a carga de cada exercício."},
+ {b:1,t:"Base: progressão",f:"Suba cerca de 5% onde fizer as 12 reps com folga (2 reps na reserva)."},
+ {b:1,t:"Base: pico do bloco",f:"1-2 reps na reserva; a última série de cada exercício pode ir até a falha técnica."},
+ {b:1,t:"Semana leve",f:"Cargas da semana 1 (ou 20% menos) e só 2 das 3 séries. Hora de recuperar."},
+ {b:2,t:"Força: exercícios novos",f:"Exercícios trocados. Comece com 3 reps na reserva e carga maior que a do bloco 1."},
+ {b:2,t:"Força: progressão",f:"Mais 5% de carga onde der (2 reps na reserva)."},
+ {b:2,t:"Força: pico do ciclo",f:"1 rep na reserva; a última série pode ir até a falha técnica."},
+ {b:2,t:"Semana leve e reavaliação",f:"2 das 3 séries, leves. Pese, faça a bioimpedância e some as cargas para montar o próximo ciclo."}];
+function cicloN(d){const i=S.ciclo&&S.ciclo.inicio;if(!i)return null;return Math.floor((new Date((d||hoje())+"T12:00:00")-new Date(i+"T12:00:00"))/6048e5)+1;}
+function aplicarCiclo(){const n=cicloN();TREINOS=PROGS[n!==null&&n>=5?2:1];}
+function cicloTxt(d){const n=cicloN(d);if(n===null)return "";if(n<1)return "ciclo começa em "+fmtD(S.ciclo.inicio);if(n>8)return "ciclo concluído";return "semana "+n+"/8";}
+function iniciarCiclo(){const v=document.getElementById("ci_ini").value;if(!v)return toast("Escolha a data");S.ciclo={inicio:segunda(v)};save();aplicarCiclo();toast("Ciclo iniciado ✓");render();}
+function alterarCiclo(){if(!confirm("Alterar a data de início do ciclo?"))return;S.ciclo=null;save();aplicarCiclo();render();}
+function htmlCiclo(){
+ if(!S.ciclo)return `<div class="card"><h2>Ciclo de 8 semanas</h2><p class="muted" style="margin:0 0 8px">Escolha a segunda-feira da Semana 1. O app mostra a semana, o foco e troca sozinho os treinos do bloco 1 pelos do bloco 2 na semana 5.</p><div class="grid2"><div><label>Início (qualquer dia da semana 1)</label><input id="ci_ini" type="date" value="${segunda(hoje())}"></div><div style="align-self:end"><button onclick="iniciarCiclo()" style="width:100%">Iniciar ciclo</button></div></div></div>`;
+ const n=cicloN();
+ const barra=`<div style="display:flex;gap:4px;margin:10px 0">${SEMANAS_CICLO.map((w,i)=>`<div style="flex:1;height:8px;border-radius:6px;background:${i+1<n?"rgba(167,139,250,.9)":i+1===n?"linear-gradient(90deg,#c4b5fd,#7c4dff)":"rgba(255,255,255,.15)"};${i+1===n?"box-shadow:0 0 10px rgba(167,139,250,.8)":""}"></div>`).join("")}</div>`;
+ const lista=`<details><summary>Ver as 8 semanas</summary><div class="list" style="margin-top:6px">${SEMANAS_CICLO.map((w,i)=>`<div class="item"><div><div class="t">Semana ${i+1} · ${esc(w.t)}</div><div class="s">${esc(w.f)}</div></div></div>`).join("")}</div></details>`;
+ const alt=`<div class="row" style="margin-top:6px"><button class="sec sm" onclick="alterarCiclo()">Alterar início (${fmtD(S.ciclo.inicio)})</button></div>`;
+ if(n<1)return `<div class="card"><h2>Ciclo de 8 semanas</h2><p class="muted" style="margin:0">Começa em ${fmtD(S.ciclo.inicio)}.</p>${lista}${alt}</div>`;
+ if(n>8)return `<div class="card"><h2>Ciclo concluído 🎉</h2><p class="muted" style="margin:0">Hora de reavaliar: peso, bioimpedância e cargas. Com esses números eu monto o próximo ciclo.</p>${lista}${alt}</div>`;
+ const w=SEMANAS_CICLO[n-1];
+ return `<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Semana ${n} de 8</h2><span class="pill ${w.t.startsWith("Semana leve")||n===8?"lo":"ok"}">Bloco ${w.b}</span></div>${barra}<div class="t" style="font-weight:600">${esc(w.t)}</div><p class="muted" style="margin:4px 0 8px">${esc(w.f)}</p>${lista}${alt}</div>`;
+}
 
 const DIETA = [
  {ref:"Desjejum",hora:"06:30",itens:["Ovos mexidos — 2 unidades","Cuscuz — 1 cuscuzeira pequena","Café com leite semidesnatado — 1 xícara","OU: 2 pães de queijo pequenos + 2 ovos mexidos + café com leite"]},
@@ -295,7 +301,7 @@ function botoesPlano(){return `<div class="row" style="margin-top:8px">${PLANO.m
 /* ============ ESTADO ============ */
 const KEY="saude.v1";
 let S = load();
-function norm(x){x.exames=x.exames||{};x.diario=x.diario||{};x.logs=x.logs||[];x.cargas=x.cargas||{};x.perfil=x.perfil||{};x.atividades=x.atividades||[];x.meusAlim=x.meusAlim||[];x.composicao=x.composicao||[];return x;}
+function norm(x){x.exames=x.exames||{};x.diario=x.diario||{};x.logs=x.logs||[];x.cargas=x.cargas||{};x.perfil=x.perfil||{};x.atividades=x.atividades||[];x.meusAlim=x.meusAlim||[];x.composicao=x.composicao||[];x.ciclo=x.ciclo||null;return x;}
 function load(){
  try{const s=JSON.parse(localStorage.getItem(KEY)); if(s) return norm(s);}catch(e){}
  return norm({exames:JSON.parse(JSON.stringify(SEED_EXAMES)),diario:{},logs:[],cargas:{},perfil:{nome:"",nasc:"",altura:""}});
@@ -308,7 +314,7 @@ const fmtD=d=>{const [y,m,dd]=d.split("-");return `${dd}/${m}/${y}`;};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 /* ============ VERSÃO / ATUALIZAÇÃO ============ */
-const APP_VERSION="1.0";
+const APP_VERSION="1.1";
 function atualizar(){ // recarrega ignorando o cache do Safari
  toast("Atualizando…");
  const u=location.pathname+"?v="+Date.now()+location.hash;
@@ -495,7 +501,7 @@ function vHoje(m,sub_){
   <p class="muted" style="margin:6px 0 0">No Garmin Connect: Hoje → Calorias. O <b>total</b> (repouso + ativas) é o seu gasto real e é o que entra no saldo.</p>
  </div>
  <div class="card"><h2>Treino e cardio</h2>
-  ${!temForca&&tr?`<div class="item" style="margin-bottom:8px"><div><div class="t">${esc(tr.nome)}</div><div class="s">Planejado para ${tr.dia}</div></div><div class="row" style="flex-wrap:nowrap">${ehHoje?`<button class="sm" onclick="abrirTreino('${tr.id}')">Iniciar</button>`:""}<button class="sec sm" onclick="marcarTreino('${tr.id}')">Marcar feito</button></div></div>`:!temForca?`<div class="muted" style="margin-bottom:8px">Sem treino de força planejado neste dia.</div>`:""}
+  ${!temForca&&tr?`<div class="item" style="margin-bottom:8px"><div><div class="t">${esc(tr.nome)}</div><div class="s">Planejado para ${tr.dia}${cicloTxt(diaSel)?" · "+cicloTxt(diaSel):""}</div></div><div class="row" style="flex-wrap:nowrap">${ehHoje?`<button class="sm" onclick="abrirTreino('${tr.id}')">Iniciar</button>`:""}<button class="sec sm" onclick="marcarTreino('${tr.id}')">Marcar feito</button></div></div>`:!temForca?`<div class="muted" style="margin-bottom:8px">Sem treino de força planejado neste dia.</div>`:""}
   ${feitos.length?`<div class="list">${feitos.map(a=>`<div class="item" onclick="editarAtiv('${a.k}',${a.i})"><div><div class="t">${esc(a.nome)}</div><div class="s">${[a.dur&&a.dur+" min",a.dist&&a.dist+" km",a.fc&&"FC "+a.fc,a.kcal?nf(a.kcal)+" kcal":"informar kcal ›"].filter(Boolean).join(" · ")}</div></div><span class="muted">›</span></div>`).join("")}</div>`:""}
   ${kcalAtiv?`<p class="muted" style="margin:8px 0 0">Atividades: ${nf(kcalAtiv)} kcal (já estão dentro do total do Garmin).</p>`:""}
   <details style="margin-top:8px"><summary>＋ Registrar cardio / outra atividade</summary>${formAtiv(false)}</details>
@@ -643,13 +649,13 @@ function vTreinos(m,sub_){
  const forca=wk.filter(a=>a.k==="log").length,outras=wk.filter(a=>a.k==="ativ").length;
  const min=wk.reduce((a,x)=>a+x.dur,0),kc=wk.reduce((a,x)=>a+x.kcal,0);
  const hist=todos.slice().sort((a,b)=>b.data.localeCompare(a.data)).slice(0,15);
- m.innerHTML=`<div class="card"><h2>Esta semana</h2><div class="kpis">
+ m.innerHTML=`${htmlCiclo()}<div class="card"><h2>Esta semana</h2><div class="kpis">
   <div class="kpi"><div class="l">Treinos de força</div><div class="v">${forca}/5</div></div>
   <div class="kpi"><div class="l">Cardio e outras</div><div class="v">${outras}</div></div>
   <div class="kpi"><div class="l">Tempo ativo</div><div class="v">${nf(min)} min</div></div>
   <div class="kpi"><div class="l">Calorias em atividades</div><div class="v">${nf(kc)}</div></div></div></div>
- <div class="card"><h2>Plano</h2><div class="list">${TREINOS.map(t=>`<div class="item"><div><div class="t">${esc(t.nome)}</div><div class="s">${t.dia} · ${t.blocos.reduce((a,b)=>a+b.ex.length,0)} exercícios</div></div><div class="row" style="flex-wrap:nowrap"><button class="sec sm" onclick="exportGarmin('${t.id}')">Garmin</button><button class="sm" onclick="abrirTreino('${t.id}')">Iniciar</button></div></div>`).join("")}</div>
-  <p class="muted">"Garmin" mostra o treino em JSON para copiar. Os mesmos arquivos já estão na sua pasta no Mac (GARMIN).</p></div>
+ <div class="card"><h2>Plano · ${TREINOS===PROGS[2]?"Bloco 2":"Bloco 1"}</h2><div class="list">${TREINOS.map(t=>`<div class="item"><div><div class="t">${esc(t.nome)}</div><div class="s">${t.dia} · ${t.blocos.reduce((a,b)=>a+b.ex.length,0)} exercícios</div></div><div class="row" style="flex-wrap:nowrap"><button class="sec sm" onclick="exportGarmin('${t.id}')">Garmin</button><button class="sm" onclick="abrirTreino('${t.id}')">Iniciar</button></div></div>`).join("")}</div>
+  <p class="muted">"Garmin" mostra o treino em JSON para copiar. Os arquivos prontos estão no Mac: GARMIN → PERIODIZACAO 8 SEMANAS (v4). Treinos em bisets: 2 exercícios seguidos, 3 voltas.</p></div>
  <div class="card"><h2>Registrar cardio / outra atividade</h2>${formAtiv(true)}</div>
  <div class="card"><h2>Histórico</h2><p class="muted" style="margin-top:0">Toque num item para informar ou corrigir duração, FC e calorias do Garmin.</p><div class="list">${hist.map(a=>`<div class="item" onclick="editarAtiv('${a.k}',${a.i})"><div><div class="t">${esc(a.nome)}</div><div class="s">${[fmtD(a.data),a.dur&&a.dur+" min",a.dist&&a.dist+" km",a.kcal?nf(a.kcal)+" kcal":"sem kcal"].filter(Boolean).join(" · ")}</div></div><span class="muted">›</span></div>`).join("")||'<div class="muted">Nenhum treino registrado ainda.</div>'}</div></div>`;
 }
@@ -658,9 +664,9 @@ function abrirTreino(id){const t=TREINOS.find(x=>x.id===id);sessao={id,inicio:Da
  view="treinos";render();}
 function vSessao(m){
  const t=TREINOS.find(x=>x.id===sessao.id);
- m.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">${esc(t.nome)}</h2><span class="muted" id="cron">00:00</span></div><p class="muted">${esc(t.desc)}</p></div>
- ${t.blocos.map((b,bi)=>`<div class="card">${b.ex.length>1?`<h3>Bloco ${bi+1} · ${b.x} voltas · descanso ${b.r}s</h3>`:""}
-  ${b.ex.map((e,ei)=>{const k=bi+"_"+ei;return `<h2 style="font-size:15px">${esc(e[0])} <span class="muted" style="font-weight:400;font-size:12px">${e[4]?e[4]+"s":"alvo "+e[3]+" reps"} · descanso ${b.r}s</span></h2>
+ m.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">${esc(t.nome)}</h2><span class="muted" id="cron">00:00</span></div><p class="muted">${esc(t.desc)}</p>${cicloN()!==null&&cicloN()>=1&&cicloN()<=8?`<p class="muted" style="margin:0"><b>Semana ${cicloN()}/8:</b> ${esc(SEMANAS_CICLO[cicloN()-1].f)}</p>`:""}</div>
+ ${t.blocos.map((b,bi)=>`<div class="card">${b.ex.length>1?`<h3>${b.ex.length===2?"Biset":"Bloco"} ${bi+1} · ${b.x} voltas · descanso ${b.r}s</h3>`:""}
+  ${b.ex.map((e,ei)=>{const k=bi+"_"+ei;return `<h2 style="font-size:15px">${esc(e[0])} <span class="muted" style="font-weight:400;font-size:12px">${e[4]?e[4]+"s":"alvo "+e[3]+" reps"}${ei===b.ex.length-1?" · descanso "+b.r+"s":""}</span></h2>
    <div class="setrow" style="margin-bottom:2px"><div class="n">#</div><div class="s muted" style="font-size:11px">Carga (kg)</div><div class="s muted" style="font-size:11px">${e[4]?"Segundos":"Reps"}</div><div></div></div>
    ${sessao.sets[k].map((s,si)=>`<div class="setrow"><div class="n">${si+1}</div><input type="number" step="0.5" inputmode="decimal" value="${s.peso}" oninput="sessao.sets['${k}'][${si}].peso=this.value"><input type="number" inputmode="numeric" value="${s.reps}" oninput="sessao.sets['${k}'][${si}].reps=this.value"><button class="chk ${s.ok?"done":"sec"}" onclick="toggleSet('${k}',${si},this)">${s.ok?"✓":""}</button></div>`).join("")}`;}).join("")}
  </div>`).join("")}
@@ -872,14 +878,15 @@ function vConfig(m,sub_){document.getElementById("hTitle").textContent="Ajustes"
  <div class="card"><h2>Instalar no iPhone</h2><ol class="muted" style="padding-left:18px;line-height:1.6"><li>Abra esta página no Safari.</li><li>Toque em Compartilhar (quadrado com seta).</li><li>"Adicionar à Tela de Início".</li></ol></div>
  <div class="card"><h2>Zona de perigo</h2><button class="danger" onclick="if(confirm('Apagar TODOS os dados deste aparelho?')){localStorage.removeItem(KEY);S=load();render()}">Apagar tudo</button></div>
  <p class="muted" style="text-align:center">Minha Saúde · v${APP_VERSION}</p>`;}
-function importarTexto(){try{const s=JSON.parse(document.getElementById("imptxt").value);if(!s.exames)throw 0;S=norm(s);save();toast("Backup importado");render();}catch(e){toast("Texto inválido");}}
-function importar(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const s=JSON.parse(r.result);if(!s.exames)throw 0;S=norm(s);save();toast("Backup importado");render();}catch(e){toast("Arquivo inválido");}};r.readAsText(f);}
+function importarTexto(){try{const s=JSON.parse(document.getElementById("imptxt").value);if(!s.exames)throw 0;S=norm(s);aplicarCiclo();save();toast("Backup importado");render();}catch(e){toast("Texto inválido");}}
+function importar(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const s=JSON.parse(r.result);if(!s.exames)throw 0;S=norm(s);aplicarCiclo();save();toast("Backup importado");render();}catch(e){toast("Arquivo inválido");}};r.readAsText(f);}
 
 function salvarPerfil(){const g=id=>document.getElementById(id).value;S.perfil.nome=g("p_nome");S.perfil.altura=g("p_alt");S.perfil.meta=g("p_meta");S.perfil.nasc=g("p_nasc");S.perfil.sexo=g("p_sexo");save();toast("Salvo ✓");}
 const mainEl=document.getElementById("main");
 mainEl.addEventListener("input",e=>{if(view==="hoje"&&e.target.id&&e.target.id.startsWith("d_")){lerCampos();atualizarBalanco();}});
 mainEl.addEventListener("change",e=>{if(view==="hoje"&&e.target.id&&e.target.id.startsWith("d_")){lerCampos();save();}});
 
+aplicarCiclo();
 render();
 </script>
 </body>
